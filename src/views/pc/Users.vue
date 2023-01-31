@@ -1,9 +1,9 @@
 <template>
-  <div class="videos-container">videos</div>
+  <div class="users-container">videos</div>
 </template>
 
 <script>
 export default {
-  name: 'Videos',
+  name: 'Users',
 };
 </script>

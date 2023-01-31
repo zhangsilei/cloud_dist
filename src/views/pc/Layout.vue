@@ -1,13 +1,12 @@
 <template>
   <div class="layout-container">
     <n-layout has-sider style="width: 100%; height: 100%">
+      <!-- show-trigger -->
       <n-layout-sider
         bordered
         collapse-mode="width"
-        :collapsed-width="50"
-        :width="170"
+        :width="role === 0 ? 200 : 250"
         :collapsed="collapsed"
-        show-trigger
         @collapse="collapsed = true"
         @expand="collapsed = false"
       >
@@ -15,7 +14,9 @@
           class="logo"
           src="https://img2.baidu.com/it/u=1882482103,2575197468&fm=253&fmt=auto&app=138&f=JPEG?w=750&h=500"
         />
-        <n-menu v-model:value="activeKey" :options="menuOptions" />
+        <n-divider style="margin: 10px 0 0" />
+        <menu-bar v-if="role === 0" />
+        <zone-nav v-else />
       </n-layout-sider>
       <n-layout>
         <n-layout-header>
@@ -42,95 +43,36 @@
 </template>
 
 <script>
-import { defineComponent, h, ref } from 'vue';
-import { NIcon } from 'naive-ui';
 import {
   NLayout,
   NLayoutSider,
   NLayoutHeader,
   NLayoutContent,
-  NMenu,
   NPageHeader,
   NDropdown,
   NButton,
+  NDivider,
 } from 'naive-ui';
-import { IosVideocam } from '@vicons/ionicons4';
-import { Users, Settings } from '@vicons/tabler';
-import { ShieldKeyhole20Regular } from '@vicons/fluent';
+import MenuBar from '@/components/pc/MenuBar';
+import ZoneNav from '@/components/pc/ZoneNav';
 
-function renderIcon(icon) {
-  return () => h(NIcon, null, { default: () => h(icon) });
-}
-
-export default defineComponent({
+export default {
   components: {
     NLayout,
     NLayoutSider,
     NLayoutHeader,
     NLayoutContent,
-    NMenu,
     NPageHeader,
     NDropdown,
     NButton,
+    NDivider,
+    MenuBar,
+    ZoneNav,
   },
   name: 'Layout',
   setup() {
     return {
-      activeKey: ref(null),
-      menuOptions: [
-        {
-          key: 'divider-1',
-          type: 'divider',
-        },
-        {
-          label: () =>
-            h(
-              'a',
-              {
-                href: 'https://baike.baidu.com/item/%E4%B8%94%E5%90%AC%E9%A3%8E%E5%90%9F',
-              },
-              '内容管理'
-            ),
-          key: 'hear-the-wind-sing',
-          icon: renderIcon(IosVideocam),
-        },
-        {
-          label: () =>
-            h(
-              'a',
-              {
-                href: 'https://baike.baidu.com/item/%E4%B8%94%E5%90%AC%E9%A3%8E%E5%90%9F',
-              },
-              '激活码管理'
-            ),
-          key: 'hear-the-wind-sing',
-          icon: renderIcon(ShieldKeyhole20Regular),
-        },
-        {
-          label: () =>
-            h(
-              'a',
-              {
-                href: 'https://baike.baidu.com/item/%E4%B8%94%E5%90%AC%E9%A3%8E%E5%90%9F',
-              },
-              '用户列表'
-            ),
-          key: 'hear-the-wind-sing',
-          icon: renderIcon(Users),
-        },
-        {
-          label: () =>
-            h(
-              'a',
-              {
-                href: 'https://baike.baidu.com/item/%E4%B8%94%E5%90%AC%E9%A3%8E%E5%90%9F',
-              },
-              '参数设置'
-            ),
-          key: 'hear-the-wind-sing',
-          icon: renderIcon(Settings),
-        },
-      ],
+      role: 1,
       options: [
         {
           label: '修改密码',
@@ -143,7 +85,7 @@ export default defineComponent({
       ],
     };
   },
-});
+};
 </script>
 
 <style lang="scss" scoped>
@@ -159,8 +101,10 @@ export default defineComponent({
     margin-right: 10px;
   }
   .content {
-    padding: 20px;
+    padding: 10px;
+    height: calc(100% - 50px);
     background: #f0f2f5;
+    text-align: initial;
   }
 }
 </style>

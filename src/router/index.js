@@ -19,10 +19,32 @@ const pcRoutes = [
     path: '/',
     component: Layout,
     children: [
+      // // 管理员端
+      // {
+      //   path: 'videos',
+      //   name: '内容管理',
+      //   component: () => import('../views/pc/AdminVideos.vue'),
+      // },
+      // 用户端
       {
         path: 'videos',
-        name: '内容管理-视频',
-        component: () => import('../views/pc/Videos.vue'),
+        name: '内容管理',
+        component: () => import('../views/pc/UserVideos.vue'),
+      },
+      {
+        path: 'cdkey',
+        name: '激活码管理',
+        component: () => import('../views/pc/Cdkey.vue'),
+      },
+      {
+        path: 'users',
+        name: '用户列表',
+        component: () => import('../views/pc/Users.vue'),
+      },
+      {
+        path: 'settings',
+        name: '参数设置',
+        component: () => import('../views/pc/Settings.vue'),
       },
     ],
   },

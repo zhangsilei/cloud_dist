@@ -18,6 +18,11 @@ body,
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  user-select: none;
+  -ms-user-select: none; // IE
+  -moz-user-select: none; // 火狐
+  -khtml-user-select: none; // 早期浏览器
+  -webkit-user-select: none;
 }
 
 nav {
