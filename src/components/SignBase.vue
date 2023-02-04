@@ -82,7 +82,9 @@ export default defineComponent({
     },
   },
   methods: {
-    onClick() {},
+    onClick() {
+      this.$emit('onClick');
+    },
   },
 });
 </script>

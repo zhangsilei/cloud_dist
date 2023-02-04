@@ -43,6 +43,7 @@
           <video-card
             :file-name="item.fileName"
             :like-num="item.likeNum"
+            :authority="item.authority"
           ></video-card>
         </n-grid-item>
       </n-grid>
@@ -100,14 +101,20 @@ export default {
       sortType: SORT_TYPE_DEFAULT,
       fileNames: ['Favorite', 'Videos', 'Photos'],
       dataList: [
-        { likeNum: 10, fileName: 'xxxx.mp4' },
-        { likeNum: 10, fileName: 'xxxx.mp4' },
-        { likeNum: 10, fileName: 'xxxx.mp4' },
-        { likeNum: 10, fileName: 'xxxx.mp4' },
-        { likeNum: 10, fileName: 'xxxx.mp4' },
-        { likeNum: 10, fileName: 'xxxx.mp4' },
-        { likeNum: 10, fileName: 'xxxx.mp4' },
-        { likeNum: 10, fileName: 'xxxx.mp4' },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: false },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
       ],
     });
 

@@ -12,4 +12,11 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
-createApp(App).use(store).use(router).mount('#app');
+const app = createApp(App);
+
+app.provide('global', {
+  ROLE_USER: 'user',
+  ROLE_ADMIN: 'admin',
+});
+
+app.use(store).use(router).mount('#app');
