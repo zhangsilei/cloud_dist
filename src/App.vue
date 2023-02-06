@@ -1,6 +1,9 @@
 <template>
   <div class="container">
     <router-view></router-view>
+    <n-message-provider>
+      <content />
+    </n-message-provider>
   </div>
 </template>
 

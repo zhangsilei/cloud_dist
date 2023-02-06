@@ -84,22 +84,22 @@ export default {
         context.emit('update:modelValue', value);
       },
     });
-    const cancel = () => {
-      showModal = false;
-      context.emit('onCancel');
-    };
     const confirm = () => {
-      showModal = false;
       context.emit('onConfirm');
     };
 
     return {
       Close,
       showModal,
-      cancel,
       confirm,
     };
   },
+  methods: {
+    cancel() {
+      this.showModal = false;
+      this.$emit('onCancel');
+    }
+  }
 };
 </script>
 

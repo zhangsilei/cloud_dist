@@ -3,6 +3,7 @@ import Layout from '@/views/pc/Layout.vue';
 import SignIn from '@/views/pc/SignIn';
 import SignUp from '@/views/pc/SignUp';
 import MSignIn from '@/views/m/SignIn';
+import { isAdmin } from '@/common/global';
 
 const pcRoutes = [
   {
@@ -19,31 +20,27 @@ const pcRoutes = [
     path: '/',
     component: Layout,
     children: [
-      // // 管理员端
-      // {
-      //   path: 'videos',
-      //   name: '内容管理',
-      //   component: () => import('../views/pc/AdminVideos.vue'),
-      // },
-      // 用户端
       {
         path: 'videos',
-        name: '内容管理',
-        component: () => import('../views/pc/UserVideos.vue'),
+        name: 'videos',
+        component: () =>
+          isAdmin
+            ? import('../views/pc/AdminVideos.vue')
+            : import('../views/pc/UserVideos.vue'),
       },
       {
         path: 'cdkey',
-        name: '激活码管理',
+        name: 'cdkey',
         component: () => import('../views/pc/Cdkey.vue'),
       },
       {
         path: 'users',
-        name: '用户列表',
+        name: 'users',
         component: () => import('../views/pc/Users.vue'),
       },
       {
         path: 'settings',
-        name: '参数设置',
+        name: 'settings',
         component: () => import('../views/pc/Settings.vue'),
       },
     ],

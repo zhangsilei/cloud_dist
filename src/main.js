@@ -15,8 +15,8 @@ router.beforeEach((to, from, next) => {
 const app = createApp(App);
 
 app.provide('global', {
-  ROLE_USER: 'user',
-  ROLE_ADMIN: 'admin',
+  ROLE_USER: 2,
+  ROLE_ADMIN: 1,
 });
 
 app.use(store).use(router).mount('#app');
