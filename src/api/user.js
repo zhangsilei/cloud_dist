@@ -15,3 +15,19 @@ export function login(data) {
     data,
   });
 }
+
+export function getUserList(params) {
+  return request({
+    url: '/users',
+    method: 'get',
+    params,
+  });
+}
+
+export function updateUser(userId, data) {
+  return request({
+    url: `/users/${userId}`,
+    method: 'put',
+    data,
+  });
+}

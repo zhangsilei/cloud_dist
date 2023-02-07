@@ -49,8 +49,9 @@
 
 <script>
 import { NFormItem, NInput, NForm, NButton, NDataTable } from 'naive-ui';
-import { ref, h } from 'vue';
+import { ref, h, onMounted } from 'vue';
 import PopupWindow from '@/components/pc/PopupWindow.vue';
+import { getUserList } from '@/api/user';
 
 export default {
   name: 'Users',
@@ -66,6 +67,28 @@ export default {
       // TODO: 重置密码接口
       isShowPwdAlert.value = false;
     };
+    const data = (async () => {
+      const res = await getUserList();
+      debugger;
+    })();
+    // [
+    //   {
+    //     id: '1',
+    //     user_id: '0001',
+    //     user_name: '张三',
+    //     user_type: 1,
+    //   },
+    //   {
+    //     id: '2',
+    //     user_id: '0002',
+    //     user_name: '李四',
+    //     user_type: 2,
+    //   },
+    // ];
+
+    // onMounted(() => {
+    //   data = getUserList();
+    // })
 
     return {
       filterFormData,

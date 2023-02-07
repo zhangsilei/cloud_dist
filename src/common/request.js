@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { createDiscreteApi } from 'naive-ui';
+import { getToken } from './cookie';
 
 const { message } = createDiscreteApi(['message']);
 
@@ -16,6 +17,7 @@ const request = axios.create({
 // request拦截器
 request.interceptors.request.use(
   (config) => {
+    config.headers['token'] = getToken();
     return config;
   },
   (error) => {

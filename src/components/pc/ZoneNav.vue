@@ -58,6 +58,52 @@ export default {
               key: 'Mobile game',
               children: [
                 {
+                  label: 'game1',
+                  key: 'game1',
+                  children: [
+                    {
+                      label: 'xxxx',
+                      key: 'xxxx',
+                      children: [
+                        {
+                          label: 'aaaaa',
+                          key: 'aaaaa',
+                          children: [
+                            {
+                              label: 'bbbb',
+                              key: 'bbbb',
+                            },
+                            {
+                              label: 'Favorite',
+                              key: 'Favorite',
+                            },
+                            {
+                              label: 'Videos',
+                              key: 'Videos',
+                            },
+                            {
+                              label: 'Photos',
+                              key: 'Photos',
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      label: 'Favorite',
+                      key: 'Favorite',
+                    },
+                    {
+                      label: 'Videos',
+                      key: 'Videos',
+                    },
+                    {
+                      label: 'Photos',
+                      key: 'Photos',
+                    },
+                  ],
+                },
+                {
                   label: 'Favorite',
                   key: 'Favorite',
                 },
@@ -70,6 +116,18 @@ export default {
                   key: 'Photos',
                 },
               ],
+            },
+            {
+              label: 'Favorite',
+              key: 'Favorite',
+            },
+            {
+              label: 'Videos',
+              key: 'Videos',
+            },
+            {
+              label: 'Photos',
+              key: 'Photos',
             },
           ],
         },

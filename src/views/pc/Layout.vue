@@ -5,7 +5,6 @@
       <n-layout-sider
         bordered
         collapse-mode="width"
-        :width="role === 0 ? 200 : 250"
         @collapse="collapsed = true"
         @expand="collapsed = false"
       >
@@ -14,8 +13,8 @@
           src="https://img2.baidu.com/it/u=1882482103,2575197468&fm=253&fmt=auto&app=138&f=JPEG?w=750&h=500"
         />
         <n-divider style="margin: 10px 0 0" />
-        <menu-bar v-if="role === 0" />
-        <zone-nav v-else />
+        <menu-bar v-if="isAdmin" />
+        <zone-nav v-if="isUser" />
       </n-layout-sider>
       <n-layout>
         <n-layout-header>
@@ -81,11 +80,11 @@ import {
   NFormItem,
   NInput,
 } from 'naive-ui';
-import { computed, ref, reactive, inject } from 'vue';
+import { ref, reactive } from 'vue';
 import MenuBar from '@/components/pc/MenuBar';
 import ZoneNav from '@/components/pc/ZoneNav';
 import PopupWindow from '@/components/pc/PopupWindow';
-import { getRole } from '@/common/cookie';
+import { isUser, isAdmin } from '@/common/global';
 
 export default {
   components: {
@@ -148,14 +147,6 @@ export default {
       return formDataPwd.pwd === val;
     };
 
-    const global = inject('global');
-    const isUser = computed(() => {
-      return getRole === global.ROLE_USER;
-    });
-    const isAdmin = computed(() => {
-      return getRole === global.ROLE_ADMIN;
-    });
-
     return {
       options: [
         {
@@ -183,8 +174,8 @@ export default {
       },
       formDataPwd,
       formRef,
-      isUser,
-      isAdmin,
+      isUser: isUser(),
+      isAdmin: isAdmin(),
       onSelect,
       updatePwd,
     };

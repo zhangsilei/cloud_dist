@@ -130,9 +130,9 @@ export default {
   watch: {
     isShowCdkeyAlert(val) {
       if (!val) {
-        this.cdkeyFormData.dist = '';
-        this.cdkeyFormData.expiration = '';
-        this.cdkeyFormData.amount = '';
+        this.cdkeyFormData.dist = null;
+        this.cdkeyFormData.expiration = null;
+        this.cdkeyFormData.amount = null;
       }
     },
   },
