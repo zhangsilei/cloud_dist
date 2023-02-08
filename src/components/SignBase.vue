@@ -72,6 +72,7 @@ import { IosRefresh } from '@vicons/ionicons4';
 import { createCaptcha } from '@/api/captcha';
 import { register, login } from '@/api/user';
 import { setRole, setToken, setUser } from '@/common/cookie';
+import { isUser } from '@/common/global';
 
 export const TYPE_SIGN_IN = 0;
 export const TYPE_SIGN_UP = 1;
@@ -144,7 +145,7 @@ export default defineComponent({
           setToken(token);
           setRole(user_type);
           setUser(user_name);
-          this.$router.push({ path: '/videos' });
+          this.$router.push({ path: '/' });
         }
       } catch (e) {
         this.renderCode();

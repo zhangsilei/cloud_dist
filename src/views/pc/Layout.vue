@@ -30,14 +30,22 @@
                     style="height: 10px; margin-right: 5px"
                     src="https://img2.baidu.com/it/u=1882482103,2575197468&fm=253&fmt=auto&app=138&f=JPEG?w=750&h=500"
                   />
-                  <span class="user">admin</span>
+                  <span class="user">{{ user }}</span>
                 </n-button>
               </n-dropdown>
             </template>
           </n-page-header>
         </n-layout-header>
         <n-layout-content class="content">
-          <router-view></router-view>
+          <template v-if="isAdmin">
+            <div class="admin-content">
+              <zone-nav v-if="isShowNav" />
+              <router-view></router-view>
+            </div>
+          </template>
+          <tempalte v-else>
+            <router-view></router-view>
+          </tempalte>
         </n-layout-content>
       </n-layout>
     </n-layout>
@@ -85,6 +93,7 @@ import MenuBar from '@/components/pc/MenuBar';
 import ZoneNav from '@/components/pc/ZoneNav';
 import PopupWindow from '@/components/pc/PopupWindow';
 import { isUser, isAdmin } from '@/common/global';
+import { getUser } from '@/common/cookie';
 
 export default {
   components: {
@@ -112,9 +121,15 @@ export default {
       }
     },
   },
-  setup() {
+  computed: {
+    isShowNav() {
+      return this.$route.path === '/resource/manage';
+    },
+  },
+  setup(props, context) {
     const TYPE_MODPWD = 0;
     const TYPE_LOGOUT = 1;
+    const TYPE_CDKEY = 2;
     const isShowPwdAlert = ref(false);
     const formDataPwd = reactive({
       pwd: '',
@@ -147,17 +162,28 @@ export default {
       return formDataPwd.pwd === val;
     };
 
-    return {
-      options: [
+    const options = (() => {
+      const commonOpts = [
         {
           label: '修改密码',
           key: TYPE_MODPWD,
         },
+        // {
+        //   label: '退出登录',
+        //   key: TYPE_LOGOUT,
+        // },
+      ];
+      const userOpts = [
         {
-          label: '退出登录',
-          key: TYPE_LOGOUT,
+          label: '我的激活码',
+          key: TYPE_CDKEY,
         },
-      ],
+      ];
+      return isUser() ? commonOpts.concat(userOpts) : commonOpts;
+    })();
+
+    return {
+      options,
       isShowPwdAlert,
       pwdRules: {
         pwd: {
@@ -178,6 +204,7 @@ export default {
       isAdmin: isAdmin(),
       onSelect,
       updatePwd,
+      user: getUser(),
     };
   },
 };
@@ -200,6 +227,10 @@ export default {
     height: calc(100% - 50px);
     background: #f0f2f5;
     text-align: initial;
+    .admin-content {
+      display: flex;
+      flex-direction: row;
+    }
   }
 }
 </style>

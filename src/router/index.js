@@ -2,9 +2,9 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import Layout from '@/views/pc/Layout.vue';
 import SignIn from '@/views/SignIn';
 import SignUp from '@/views/SignUp';
-import { isAdmin, isMobile } from '@/common/global';
+import { ROLE_ADMIN, ROLE_USER } from '@/common/global';
 
-const commonRoutes = [
+export const commonRoutes = [
   {
     path: '/signin',
     name: 'signin',
@@ -17,49 +17,60 @@ const commonRoutes = [
   },
 ];
 
-const pcRoutes = [
+export const pcRoutes = [
   {
+    name: 'home',
     path: '/',
     component: Layout,
     children: [
       {
-        path: 'videos',
-        name: 'videos',
-        component: () =>
-          isAdmin
-            ? import('../views/pc/AdminVideos.vue')
-            : import('../views/pc/UserVideos.vue'),
+        path: '/resource',
+        name: 'resource',
+        authority: ROLE_USER,
+        component: () => import('../views/pc/UserVideos.vue'),
       },
       {
-        path: 'cdkey',
+        path: '/resource/manage',
+        name: 'resourceManage',
+        authority: ROLE_ADMIN,
+        component: () => import('../views/pc/AdminVideos.vue'),
+      },
+      {
+        path: '/cdkey',
         name: 'cdkey',
+        authority: ROLE_ADMIN,
         component: () => import('../views/pc/Cdkey.vue'),
       },
       {
-        path: 'users',
+        path: '/users',
         name: 'users',
+        authority: ROLE_ADMIN,
         component: () => import('../views/pc/Users.vue'),
       },
       {
-        path: 'settings',
+        path: '/settings',
         name: 'settings',
+        authority: ROLE_ADMIN,
         component: () => import('../views/pc/Settings.vue'),
       },
     ],
   },
 ];
 
-const mRoutes = [
-  // {
-  //   path: '/m/signin',
-  //   name: 'signin',
-  //   component: MSignIn,
-  // },
+export const mRoutes = [
+  {
+    path: '/m/resource',
+    name: 'resource',
+    authority: ROLE_USER,
+    component: () => import('../views/m/resource.vue'),
+  },
 ];
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes: commonRoutes.concat(isMobile() ? mRoutes : pcRoutes),
+  // routes: commonRoutes.concat(isMobile() ? mRoutes : pcRoutes),
+  // routes: commonRoutes,
+  routes: commonRoutes.concat(mRoutes).concat(pcRoutes),
 });
 
 export default router;

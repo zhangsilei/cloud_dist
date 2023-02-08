@@ -69,7 +69,7 @@ export default {
     };
     const data = (async () => {
       const res = await getUserList();
-      debugger;
+      // debugger;
     })();
     // [
     //   {
@@ -159,3 +159,10 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.users-container {
+  width: 100%;
+  height: 100%;
+}
+</style>

@@ -1,3 +1,4 @@
+import router from '@/router';
 import axios from 'axios';
 import { createDiscreteApi } from 'naive-ui';
 import { getToken } from './cookie';
@@ -35,6 +36,9 @@ request.interceptors.response.use(
     return response.data;
   },
   (error) => {
+    // if (error.response.status === 401) {
+    //   router.push()
+    // }
     message.error(error.message);
     return Promise.reject(error);
   }

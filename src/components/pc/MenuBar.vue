@@ -25,14 +25,14 @@ export default {
   name: 'MenuBar',
   setup() {
     return {
-      activeKey: ref(null),
+      activeKey: ref('videos'),
       menuOptions: [
         {
           label: () =>
             h(
               RouterLink,
               {
-                to: { path: '/videos' },
+                to: { path: '/resource/manage' },
               },
               '内容管理'
             ),

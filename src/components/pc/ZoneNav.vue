@@ -1,5 +1,5 @@
 <template>
-  <div class="menu-bar-container">
+  <div class="zone-nav-container">
     <n-menu
       v-model:value="activeKey"
       :options="menuOptions"
@@ -13,6 +13,8 @@ import { h, ref } from 'vue';
 import { NMenu, NIcon, NDropdown } from 'naive-ui';
 import { RouterLink } from 'vue-router';
 import { EllipsisHorizontalSharp } from '@vicons/ionicons5';
+import { isAdmin } from '@/common/global';
+import { getCategories } from '@/api/categories';
 
 function renderIcon(icon) {
   return () => h(NIcon, null, { default: () => h(icon) });
@@ -22,6 +24,11 @@ export default {
   components: { NMenu, NDropdown },
   name: 'ZoneNav',
   setup() {
+    const categories = (async () => {
+      await getCategories();
+      // debugger;
+    })()
+
     return {
       activeKey: ref(null),
       menuOptions: [
@@ -29,27 +36,29 @@ export default {
           label: () =>
             h('div', { class: 'nav-item' }, [
               h('div', null, 'Game'),
-              h(
-                NDropdown,
-                {
-                  placement: 'bottom-start',
-                  options: [
+              isAdmin()
+                ? h(
+                    NDropdown,
                     {
-                      label: '新建分区',
-                      key: '1',
+                      placement: 'bottom-start',
+                      options: [
+                        {
+                          label: '新建分区',
+                          key: '1',
+                        },
+                        {
+                          label: '新建下级分区',
+                          key: '2',
+                        },
+                        {
+                          label: '编辑',
+                          key: '3',
+                        },
+                      ],
                     },
-                    {
-                      label: '新建下级分区',
-                      key: '2',
-                    },
-                    {
-                      label: '编辑',
-                      key: '3',
-                    },
-                  ],
-                },
-                renderIcon(EllipsisHorizontalSharp)
-              ),
+                    renderIcon(EllipsisHorizontalSharp)
+                  )
+                : null,
             ]),
           key: 'Game',
           children: [
@@ -141,6 +150,13 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.zone-nav-container {
+  background: #fff;
+  border-right: 1px solid #ddd;
+}
+</style>
 
 <style lang="scss">
 .n-menu .n-submenu .n-menu-item-content {
