@@ -45,6 +45,7 @@
               style="width: 100%"
               color="#e03248"
               attr-type="button"
+              :loading="loading"
               @click="onClick"
             >
               {{ btnName }}
@@ -110,6 +111,7 @@ export default defineComponent({
       pic: '',
       countdown: 3,
       isShowSucc: false,
+      loading: false,
     };
   },
   computed: {
@@ -135,13 +137,17 @@ export default defineComponent({
   },
   methods: {
     async onClick() {
+      if (this.loading) return;
+      this.loading = true;
       try {
         if (this.isSignup) {
           await register(this.formData);
           this.isShowSucc = true;
           this.countdownInterval();
+          this.loading = false;
         } else {
           const { token, user_name, user_type } = await login(this.formData);
+          this.loading = false;
           setToken(token);
           setRole(user_type);
           setUser(user_name);
@@ -149,6 +155,8 @@ export default defineComponent({
         }
       } catch (e) {
         this.renderCode();
+      } finally {
+        this.loading = false;
       }
     },
     async renderCode() {

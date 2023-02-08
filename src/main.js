@@ -18,7 +18,11 @@ router.beforeEach((to, from, next) => {
   };
 
   const getDefaultPath = () => {
-    return getToken() ? (isMobile() ? '/m/resource' : '/resource/manage') : '/signin';
+    return getToken()
+      ? isMobile()
+        ? '/m/resource'
+        : '/resource/manage'
+      : '/signin';
   };
 
   const getFlatRoutes = (routes) => {
@@ -82,12 +86,17 @@ router.beforeEach((to, from, next) => {
   //   next(getDefaultPath());
   //   return;
   // }
+  if (!getToken() && to.path !== '/signin' && to.path !== '/signup') {
+    next({ path: '/signin' });
+    return;
+  }
+
   if (!router.hasRoute(to.name) || to.path === '/') {
     next(getDefaultPath());
     return;
   }
 
-  console.log(router.getRoutes());
+  // console.log(router.getRoutes());
   next();
 });
 
