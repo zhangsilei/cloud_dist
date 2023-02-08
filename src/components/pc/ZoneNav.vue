@@ -23,11 +23,9 @@ function renderIcon(icon) {
 export default {
   components: { NMenu, NDropdown },
   name: 'ZoneNav',
-  setup() {
-    const categories = (async () => {
-      await getCategories();
-      // debugger;
-    })()
+  async setup() {
+    const res = await getCategories();
+    // const menuOptions = res.item
 
     return {
       activeKey: ref(null),

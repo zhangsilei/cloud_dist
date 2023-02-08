@@ -14,7 +14,7 @@ import { NMenu, NIcon } from 'naive-ui';
 import { IosVideocam } from '@vicons/ionicons4';
 import { Users, Settings } from '@vicons/tabler';
 import { ShieldKeyhole20Regular } from '@vicons/fluent';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRoute } from 'vue-router';
 
 function renderIcon(icon) {
   return () => h(NIcon, null, { default: () => h(icon) });
@@ -23,9 +23,11 @@ function renderIcon(icon) {
 export default {
   components: { NMenu },
   name: 'MenuBar',
-  setup() {
+  setup(props, context) {
+    const route = useRoute();
+
     return {
-      activeKey: ref('videos'),
+      activeKey: ref(route.path.substring(1)),
       menuOptions: [
         {
           label: () =>
@@ -36,7 +38,7 @@ export default {
               },
               '内容管理'
             ),
-          key: 'videos',
+          key: 'resource/manage',
           icon: renderIcon(IosVideocam),
         },
         {
