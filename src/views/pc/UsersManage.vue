@@ -1,5 +1,5 @@
 <template>
-  <div class="users-container">
+  <div class="users-manage-container">
     <div class="filter">
       <n-form
         size="medium"
@@ -54,7 +54,7 @@ import PopupWindow from '@/components/pc/PopupWindow.vue';
 import { getUserList } from '@/api/user';
 
 export default {
-  name: 'Users',
+  name: 'UsersManage',
   components: { NFormItem, NInput, NForm, NButton, NDataTable, PopupWindow },
   setup() {
     const filterFormData = ref({
@@ -161,7 +161,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.users-container {
+.users-manage-container {
   width: 100%;
   height: 100%;
 }

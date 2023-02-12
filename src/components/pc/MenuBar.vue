@@ -14,6 +14,7 @@ import { NMenu, NIcon } from 'naive-ui';
 import { IosVideocam } from '@vicons/ionicons4';
 import { Users, Settings } from '@vicons/tabler';
 import { ShieldKeyhole20Regular } from '@vicons/fluent';
+import { Category } from '@vicons/carbon';
 import { RouterLink, useRoute } from 'vue-router';
 
 function renderIcon(icon) {
@@ -27,7 +28,7 @@ export default {
     const route = useRoute();
 
     return {
-      activeKey: ref(route.path.substring(1)),
+      activeKey: ref(route.name),
       menuOptions: [
         {
           label: () =>
@@ -38,7 +39,7 @@ export default {
               },
               '内容管理'
             ),
-          key: 'resource/manage',
+          key: 'resourceManage',
           icon: renderIcon(IosVideocam),
         },
         {
@@ -46,23 +47,35 @@ export default {
             h(
               RouterLink,
               {
-                to: { path: '/cdkey' },
+                to: { path: '/cdkey/manage' },
               },
               '激活码管理'
             ),
-          key: 'cdkey',
+          key: 'cdkeyManage',
           icon: renderIcon(ShieldKeyhole20Regular),
         },
+        // {
+        //   label: () =>
+        //     h(
+        //       RouterLink,
+        //       {
+        //         to: { path: '/categorie/manage' },
+        //       },
+        //       '分区管理'
+        //     ),
+        //   key: 'categorieManage',
+        //   icon: renderIcon(Category),
+        // },
         {
           label: () =>
             h(
               RouterLink,
               {
-                to: { path: '/users' },
+                to: { path: '/users/manage' },
               },
               '用户列表'
             ),
-          key: 'users',
+          key: 'usersManage',
           icon: renderIcon(Users),
         },
         {
@@ -70,11 +83,11 @@ export default {
             h(
               RouterLink,
               {
-                to: { path: '/settings' },
+                to: { path: '/settings/manage' },
               },
               '参数设置'
             ),
-          key: 'settings',
+          key: 'settingsManage',
           icon: renderIcon(Settings),
         },
       ],

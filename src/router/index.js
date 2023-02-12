@@ -1,8 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import Layout from '@/views/pc/Layout.vue';
+import { ROLE_ADMIN, ROLE_USER } from '@/common/global';
 import SignIn from '@/views/SignIn';
 import SignUp from '@/views/SignUp';
-import { ROLE_ADMIN, ROLE_USER } from '@/common/global';
+import Layout from '@/views/pc/Layout.vue';
 
 export const commonRoutes = [
   {
@@ -27,31 +27,37 @@ export const pcRoutes = [
         path: '/resource',
         name: 'resource',
         authority: ROLE_USER,
-        component: () => import('../views/pc/UserVideos.vue'),
+        component: () => import('../views/pc/Resource.vue'),
       },
       {
         path: '/resource/manage',
         name: 'resourceManage',
         authority: ROLE_ADMIN,
-        component: () => import('../views/pc/AdminVideos.vue'),
+        component: () => import('../views/pc/ResourceManage.vue'),
       },
       {
-        path: '/cdkey',
-        name: 'cdkey',
+        path: '/cdkey/manage',
+        name: 'cdkeyManage',
         authority: ROLE_ADMIN,
-        component: () => import('../views/pc/Cdkey.vue'),
+        component: () => import('../views/pc/CdkeyManage.vue'),
       },
       {
-        path: '/users',
-        name: 'users',
+        path: '/users/manage',
+        name: 'usersManage',
         authority: ROLE_ADMIN,
-        component: () => import('../views/pc/Users.vue'),
+        component: () => import('../views/pc/UsersManage.vue'),
       },
       {
-        path: '/settings',
-        name: 'settings',
+        path: '/settings/manage',
+        name: 'settingsManage',
         authority: ROLE_ADMIN,
-        component: () => import('../views/pc/Settings.vue'),
+        component: () => import('../views/pc/SettingsManage.vue'),
+      },
+      {
+        path: '/categorie/manage',
+        name: 'categorieManage',
+        authority: ROLE_ADMIN,
+        component: () => import('../views/pc/CategorieManage.vue'),
       },
     ],
   },

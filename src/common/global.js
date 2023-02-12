@@ -1,4 +1,4 @@
-import { getRole } from './cookie';
+import { getRole, removeRole, removeToken, removeUser } from './cookie';
 
 export const ROLE_ADMIN = 'ADMIN';
 export const ROLE_USER = 'CUSTOMER';
@@ -10,3 +10,11 @@ export const isMobile = () => {
   const mobileTags = ['Mobi', 'Android', 'iPhone'];
   return mobileTags.some((tag) => navigator.userAgent.includes(tag));
 };
+
+export const logout = () => {
+  removeToken();
+  removeUser();
+  removeRole();
+};
+
+export const onlyAllowNumber = (value) => !value || /^\d+$/.test(value);

@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import App from './App.vue';
+import i18n from '@/i18n';
 import { getRole, getToken } from './common/cookie';
 import { isMobile, ROLE_ADMIN, ROLE_USER } from './common/global';
 import router, { commonRoutes, mRoutes, pcRoutes } from './router';
@@ -86,7 +87,8 @@ router.beforeEach((to, from, next) => {
   //   next(getDefaultPath());
   //   return;
   // }
-  if (!getToken() && to.path !== '/signin' && to.path !== '/signup') {
+  const whiteList = ['/signin', '/signup', '/res/details'];
+  if (!getToken() && !whiteList.includes(to.path)) {
     next({ path: '/signin' });
     return;
   }
@@ -100,6 +102,6 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
-const app = createApp(App);
+const app = createApp(i18n);
 
 app.use(store).use(router).mount('#app');

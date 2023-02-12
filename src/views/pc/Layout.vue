@@ -14,7 +14,7 @@
         />
         <n-divider style="margin: 10px 0 0" />
         <menu-bar v-if="isAdmin" />
-        <zone-nav v-if="isUser" />
+        <categorie-tree v-if="isUser" />
       </n-layout-sider>
       <n-layout>
         <n-layout-header>
@@ -37,7 +37,8 @@
           </n-page-header>
         </n-layout-header>
         <n-layout-content class="content">
-          <template v-if="isAdmin">
+          <router-view></router-view>
+          <!-- <template v-if="isAdmin">
             <div class="admin-content">
               <zone-nav v-if="isShowNav" />
               <router-view></router-view>
@@ -45,7 +46,7 @@
           </template>
           <tempalte v-else>
             <router-view></router-view>
-          </tempalte>
+          </tempalte> -->
         </n-layout-content>
       </n-layout>
     </n-layout>
@@ -90,7 +91,7 @@ import {
 } from 'naive-ui';
 import { ref, reactive } from 'vue';
 import MenuBar from '@/components/pc/MenuBar';
-import ZoneNav from '@/components/pc/ZoneNav';
+import CategorieTree from '@/components/pc/CategorieTree';
 import PopupWindow from '@/components/pc/PopupWindow';
 import { isUser, isAdmin } from '@/common/global';
 import { getUser } from '@/common/cookie';
@@ -109,7 +110,7 @@ export default {
     NFormItem,
     NInput,
     MenuBar,
-    ZoneNav,
+    CategorieTree,
     PopupWindow,
   },
   name: 'Layout',
@@ -230,6 +231,8 @@ export default {
     .admin-content {
       display: flex;
       flex-direction: row;
+      width: 100%;
+      height: 100%;
     }
   }
 }

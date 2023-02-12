@@ -7,7 +7,7 @@ export function getCategories() {
   });
 }
 
-export function addCategories(data) {
+export function createCategorie(data) {
   return request({
     url: '/categories',
     method: 'post',
@@ -15,7 +15,7 @@ export function addCategories(data) {
   });
 }
 
-export function updateCategories(id) {
+export function updateCategorie(id, data) {
   return request({
     url: `/categories/${id}`,
     method: 'put',
@@ -23,7 +23,7 @@ export function updateCategories(id) {
   });
 }
 
-export function deleteCategories(id) {
+export function deleteCategorie(id) {
   return request({
     url: `/categories/${id}`,
     method: 'delete',

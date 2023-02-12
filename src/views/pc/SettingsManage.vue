@@ -1,5 +1,5 @@
 <template>
-  <div class="settings-container">
+  <div class="settings-manage-container">
     <div class="website">
       <n-form
         ref="websiteFormRef"
@@ -58,7 +58,7 @@ import {
 import { ref } from 'vue';
 
 export default {
-  name: 'Settings',
+  name: 'SettingsManage',
   components: {
     NIcon,
     NInput,
@@ -88,7 +88,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.settings-container {
+.settings-manage-container {
   .website {
     max-width: 400px;
   }

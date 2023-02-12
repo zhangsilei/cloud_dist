@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-videos-container">
+  <div class="resource-container">
     <div class="top">
       <n-breadcrumb separator=">">
         <n-breadcrumb-item> Game </n-breadcrumb-item>
@@ -10,14 +10,6 @@
           <n-icon :component="IosSearch" />
         </template>
       </n-input>
-      <n-button
-        type="primary"
-        attr-type="button"
-        style="margin-left: 10px"
-        @click="isShowCategorieAlert = true"
-      >
-        新增分区
-      </n-button>
     </div>
 
     <div class="sort">
@@ -56,34 +48,6 @@
         </n-grid-item>
       </n-grid>
     </div>
-
-    <popup-window
-      v-model="isShowCategorieAlert"
-      title="创建分区"
-      @on-confirm="addCategorie"
-    >
-      <n-form
-        ref="categorieFormRef"
-        :model="categorieFormData"
-        :rules="rules"
-        label-placement="left"
-        label-width="auto"
-        require-mark-placement="right-hanging"
-      >
-        <n-form-item label="分区名称" path="name">
-          <n-input
-            v-model:value="categorieFormData.name"
-            placeholder="请输入"
-          />
-        </n-form-item>
-        <n-form-item label="分区描述" path="description">
-          <n-input
-            v-model:value="categorieFormData.description"
-            placeholder="请输入"
-          />
-        </n-form-item>
-      </n-form>
-    </popup-window>
   </div>
 </template>
 
@@ -97,16 +61,11 @@ import {
   NSpace,
   NGrid,
   NGridItem,
-  NButton,
-  NForm,
-  NFormItem,
 } from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
 import { reactive } from 'vue';
 import DirCard from '@/components/pc/DirCard';
 import VideoCard from '@/components/pc/VideoCard';
-import { ref } from 'vue';
-import PopupWindow from '@/components/pc/PopupWindow';
 
 const SORT_TYPE_DEFAULT = 0;
 const SORT_TYPE_POPULAR = 1;
@@ -122,14 +81,10 @@ export default {
     NSpace,
     NGrid,
     NGridItem,
-    NButton,
-    NForm,
-    NFormItem,
-    PopupWindow,
     DirCard,
     VideoCard,
   },
-  name: 'UserVideos',
+  name: 'Resource',
   computed: {
     isDefault() {
       return this.state.sortType === SORT_TYPE_DEFAULT;
@@ -139,14 +94,6 @@ export default {
     },
     activeStyle() {
       return { textColor: '#ed3939', borderColor: '#ed3939' };
-    },
-  },
-  watch: {
-    isShowCategorieAlert(val) {
-      if (!val) {
-        this.categorieFormData.name = null;
-        this.categorieFormData.description = null;
-      }
     },
   },
   setup() {
@@ -171,29 +118,11 @@ export default {
       ],
     });
 
-    const addCategorie = () => {};
-
-    const categorieFormRef = ref(null);
-
     return {
       IosSearch,
       SORT_TYPE_DEFAULT,
       SORT_TYPE_POPULAR,
       state,
-      addCategorie,
-      isShowCategorieAlert: ref(false),
-      categorieFormRef,
-      categorieFormData: ref({
-        name: null,
-        description: null,
-      }),
-      rules: {
-        name: {
-          required: true,
-          trigger: ['blur', 'input'],
-          message: '请输入分区名称',
-        },
-      },
     };
   },
   methods: {
@@ -205,7 +134,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.admin-videos-container {
+.resource-container {
   background: #fff;
   height: 100%;
   padding: 10px;

@@ -1,5 +1,5 @@
 <template>
-  <div class="cdkey-container">
+  <div class="cdkey-manage-container">
     <div class="filter">
       <n-form
         size="medium"
@@ -116,7 +116,7 @@ const TYPE_CDKEY_USED = 0;
 const TYPE_CDKEY_UN_USED = 1;
 
 export default {
-  name: 'Cdkey',
+  name: 'CdkeyManage',
   components: {
     NForm,
     NSelect,
@@ -315,7 +315,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.cdkey-container {
+.cdkey-manage-container {
   width: 100%;
   height: 100%;
 }

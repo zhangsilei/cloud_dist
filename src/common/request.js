@@ -2,6 +2,7 @@ import router from '@/router';
 import axios from 'axios';
 import { createDiscreteApi } from 'naive-ui';
 import { getToken } from './cookie';
+import { logout } from './global';
 
 const { message } = createDiscreteApi(['message']);
 
@@ -36,9 +37,10 @@ request.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    // if (error.response.status === 401) {
-    //   router.push()
-    // }
+    if (error.response.status === 401) {
+      logout();
+      router.push('/');
+    }
     message.error(error.message);
     return Promise.reject(error);
   }
