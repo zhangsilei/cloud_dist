@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkcloud_dist"]=self["webpackChunkcloud_dist"]||[]).push([[576],{1576:function(r,e,n){n.r(e),n.d(e,{default:function(){return a}});var c=n(3396);const u={class:"resource-container"};function s(r,e){return(0,c.wg)(),(0,c.iD)("div",u," resource m ")}var t=n(89);const o={},i=(0,t.Z)(o,[["render",s]]);var a=i}}]);
+//# sourceMappingURL=576.e32c02ca.js.map
