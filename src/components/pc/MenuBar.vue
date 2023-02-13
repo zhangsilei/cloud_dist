@@ -47,11 +47,11 @@ export default {
             h(
               RouterLink,
               {
-                to: { path: '/cdkey/manage' },
+                to: { path: '/activation/manage' },
               },
               '激活码管理'
             ),
-          key: 'cdkeyManage',
+          key: 'activationManage',
           icon: renderIcon(ShieldKeyhole20Regular),
         },
         // {

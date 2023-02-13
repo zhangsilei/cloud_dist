@@ -77,6 +77,7 @@
 
 <script>
 import {
+  createDiscreteApi,
   NLayout,
   NLayoutSider,
   NLayoutHeader,
@@ -93,8 +94,12 @@ import { ref, reactive } from 'vue';
 import MenuBar from '@/components/pc/MenuBar';
 import CategorieTree from '@/components/pc/CategorieTree';
 import PopupWindow from '@/components/pc/PopupWindow';
-import { isUser, isAdmin } from '@/common/global';
-import { getUser } from '@/common/cookie';
+import { isUser, isAdmin , logout} from '@/common/global';
+import { getUser, getUserId } from '@/common/cookie';
+import { updateUser } from '@/api/user';
+import router from '@/router';
+
+const { message } = createDiscreteApi(['message']);
 
 export default {
   components: {
@@ -138,21 +143,23 @@ export default {
     });
     const formRef = ref(null);
 
-    const logout = () => {};
+    // const logout = () => {};
 
     const onSelect = (key, opt) => {
       if (key === TYPE_MODPWD) {
         isShowPwdAlert.value = true;
       } else if (key === TYPE_LOGOUT) {
-        logout();
+        
       }
     };
 
     const updatePwd = () => {
       formRef.value
-        ?.validate((errors) => {
+        ?.validate(async (errors) => {
           if (!errors) {
-            // TODO: 更新密码
+            await updateUser(getUserId(), { password: formDataPwd.pwd });
+            message.success('操作成功！');
+            logout();
             isShowPwdAlert.value = false;
           }
         })

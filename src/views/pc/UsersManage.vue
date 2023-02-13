@@ -1,36 +1,25 @@
 <template>
   <div class="users-manage-container">
-    <div class="filter">
-      <n-form
-        size="medium"
-        label-placement="left"
-        label-width="auto"
-        inline
-        :model="filterFormData"
-      >
-        <n-form-item label="关键字">
-          <n-input
-            v-model:value="filterFormData.query"
-            placeholder="用户名/用户ID/激活码"
-          ></n-input>
-        </n-form-item>
-        <n-form-item>
-          <n-button
-            type="primary"
-            attr-type="button"
-            @click="query"
-            style="margin-right: 20px"
-          >
-            查询
-          </n-button>
-          <n-button attr-type="button" @click="reset"> 重置 </n-button>
-        </n-form-item>
-      </n-form>
-    </div>
+    <n-space class="filter">
+      <n-form-item label-placement="left" label="关键字">
+        <n-input
+          v-model:value="filter.query"
+          placeholder="用户名/用户ID/激活码"
+        ></n-input>
+      </n-form-item>
+      <n-form-item label-placement="left">
+        <n-button type="primary" @click="query"> 查询 </n-button>
+      </n-form-item>
+      <n-form-item label-placement="left">
+        <n-button @click="reset"> 重置 </n-button>
+      </n-form-item>
+    </n-space>
 
     <n-data-table
+      :max-height="tableMaxHeight"
+      :loading="loading"
       :columns="columns"
-      :data="data"
+      :data="userList"
       :pagination="true"
       :bordered="false"
     />
@@ -47,122 +36,116 @@
   </div>
 </template>
 
-<script>
-import { NFormItem, NInput, NForm, NButton, NDataTable } from 'naive-ui';
-import { ref, h, onMounted } from 'vue';
+<script setup>
+import {
+  createDiscreteApi,
+  NFormItem,
+  NInput,
+  NForm,
+  NButton,
+  NDataTable,
+  NSpace,
+} from 'naive-ui';
+import { ref, h, onMounted, reactive, computed } from 'vue';
 import PopupWindow from '@/components/pc/PopupWindow.vue';
-import { getUserList } from '@/api/user';
+import { getUserList, updateUser } from '@/api/user';
+import { getTableMaxHeight } from '@/common/global';
 
-export default {
-  name: 'UsersManage',
-  components: { NFormItem, NInput, NForm, NButton, NDataTable, PopupWindow },
-  setup() {
-    const filterFormData = ref({
-      query: '',
-    });
-    const isShowPwdAlert = ref(false);
-    const query = () => {};
-    const reset = () => {};
-    const resetPwd = () => {
-      // TODO: 重置密码接口
-      isShowPwdAlert.value = false;
-    };
-    const data = (async () => {
-      const res = await getUserList();
-      // debugger;
-    })();
-    // [
-    //   {
-    //     id: '1',
-    //     user_id: '0001',
-    //     user_name: '张三',
-    //     user_type: 1,
-    //   },
-    //   {
-    //     id: '2',
-    //     user_id: '0002',
-    //     user_name: '李四',
-    //     user_type: 2,
-    //   },
-    // ];
+const filter = reactive({ query: null });
 
-    // onMounted(() => {
-    //   data = getUserList();
-    // })
+function query() {}
 
-    return {
-      filterFormData,
-      query,
-      reset,
-      columns: [
-        {
-          title: '编号',
-          key: 'id',
-        },
-        {
-          title: '用户ID',
-          key: 'user_id',
-        },
-        {
-          title: '用户名',
-          key: 'user_name',
-        },
-        {
-          title: '用户类型',
-          key: 'user_type',
-        },
-        {
-          title: '操作',
-          key: 'action',
-          render() {
-            return h(
-              'div',
-              { style: { color: '#18a058', cursor: 'pointer' } },
-              [
-                h(
-                  'span',
-                  {
-                    style: { 'margin-right': '10px' },
-                    onClick: () => {
-                      // TODO: 跳转到详情页
-                    },
-                  },
-                  '详情'
-                ),
-                h(
-                  'span',
-                  { onClick: () => (isShowPwdAlert.value = true) },
-                  '重置密码'
-                ),
-              ]
-            );
-          },
-        },
-      ],
-      data: [
-        {
-          id: '1',
-          user_id: '0001',
-          user_name: '张三',
-          user_type: 1,
-        },
-        {
-          id: '2',
-          user_id: '0002',
-          user_name: '李四',
-          user_type: 2,
-        },
-      ],
-      isShowPwdAlert,
-      resetPwd,
-    };
+function reset() {}
+
+let userList = ref([]);
+let loading = ref(true);
+let tableMaxHeight = ref(0);
+let isShowPwdAlert = ref(false);
+let selectedRow = ref(null);
+
+const userParams = ref({
+  page_num: 1,
+  page_size: 10,
+});
+const columns = [
+  {
+    title: '用户ID',
+    key: 'id',
   },
-};
+  {
+    title: '用户名',
+    key: 'user_name',
+  },
+  {
+    title: '用户类型',
+    key: 'user_type',
+  },
+  {
+    title: '操作',
+    key: 'action',
+    render(row) {
+      return h('div', { style: { color: '#18a058', cursor: 'pointer' } }, [
+        h(
+          'span',
+          {
+            style: { 'margin-right': '10px' },
+            onClick: () => {
+              // TODO: 跳转到详情页
+            },
+          },
+          '详情'
+        ),
+        h(
+          'span',
+          {
+            onClick: () => {
+              selectedRow.value = row;
+              isShowPwdAlert.value = true;
+            },
+          },
+          '重置密码'
+        ),
+      ]);
+    },
+  },
+];
+
+onMounted(() => {
+  const filterHeight = 58;
+  const tableHeaderHeight = 47;
+  const paginationHeight = 28 + 12;
+  const containerPadding = 10 * 2;
+  tableMaxHeight.value =
+    document.querySelector('.users-manage-container').offsetHeight -
+    filterHeight -
+    tableHeaderHeight -
+    paginationHeight -
+    containerPadding;
+});
+
+const { message } = createDiscreteApi(['message']);
+
+async function renderUserList() {
+  const res = await getUserList(userParams.value);
+  userList.value = res.users || [];
+  loading.value = false;
+}
+
+renderUserList();
+
+async function resetPwd() {
+  await updateUser(selectedRow.value.id, { password: '123456' });
+  isShowPwdAlert.value = false;
+  message.success('操作成功！');
+}
 </script>
 
 <style lang="scss" scoped>
 .users-manage-container {
   width: 100%;
   height: 100%;
+  padding: 10px;
+  background: #fff;
+  box-sizing: border-box;
 }
 </style>

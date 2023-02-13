@@ -36,10 +36,10 @@ export const pcRoutes = [
         component: () => import('../views/pc/ResourceManage.vue'),
       },
       {
-        path: '/cdkey/manage',
-        name: 'cdkeyManage',
+        path: '/activation/manage',
+        name: 'activationManage',
         authority: ROLE_ADMIN,
-        component: () => import('../views/pc/CdkeyManage.vue'),
+        component: () => import('../views/pc/ActivationManage.vue'),
       },
       {
         path: '/users/manage',

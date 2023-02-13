@@ -1,6 +1,6 @@
 import request from '@/common/request';
 
-export function getCategories() {
+export function getCategorieList() {
   return request({
     url: '/categories',
     method: 'get',

@@ -72,7 +72,7 @@ import { NAvatar, NForm, NFormItem, NInput, NButton, NIcon } from 'naive-ui';
 import { IosRefresh } from '@vicons/ionicons4';
 import { createCaptcha } from '@/api/captcha';
 import { register, login } from '@/api/user';
-import { setRole, setToken, setUser } from '@/common/cookie';
+import { setRole, setToken, setUser, setUserId } from '@/common/cookie';
 import { isUser } from '@/common/global';
 
 export const TYPE_SIGN_IN = 0;
@@ -146,11 +146,14 @@ export default defineComponent({
           this.countdownInterval();
           this.loading = false;
         } else {
-          const { token, user_name, user_type } = await login(this.formData);
+          const { token, user_name, user_type, id } = await login(
+            this.formData
+          );
           this.loading = false;
           setToken(token);
           setRole(user_type);
           setUser(user_name);
+          setUserId(id);
           this.$router.push({ path: '/' });
         }
       } catch (e) {

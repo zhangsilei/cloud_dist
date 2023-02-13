@@ -1,4 +1,10 @@
-import { getRole, removeRole, removeToken, removeUser } from './cookie';
+import {
+  getRole,
+  removeRole,
+  removeToken,
+  removeUser,
+  removeUserId,
+} from './cookie';
 
 export const ROLE_ADMIN = 'ADMIN';
 export const ROLE_USER = 'CUSTOMER';
@@ -15,6 +21,29 @@ export const logout = () => {
   removeToken();
   removeUser();
   removeRole();
+  removeUserId();
+  import('@/router').then((module) => {
+    module.default.push('/');
+  });
 };
 
 export const onlyAllowNumber = (value) => !value || /^\d+$/.test(value);
+
+export const getTableMaxHeight = (
+  containerSelector,
+  filterSelector,
+  actionSeletor
+) => {
+  const $ = (selector) => document.querySelector(selector);
+  const containerHeight = $(containerSelector);
+  let otherDomsHeight = 0;
+  // TODO: 更灵活的计算
+
+  if (filterSelector) {
+    otherDomsHeight += $(filterSelector).offsetHeight;
+  }
+  if (actionSeletor) {
+    otherDomsHeight += $(actionSeletor).offsetHeight;
+  }
+  return containerHeight.offsetHeight - otherDomsHeight;
+};

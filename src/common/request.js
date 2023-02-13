@@ -39,7 +39,6 @@ request.interceptors.response.use(
   (error) => {
     if (error.response.status === 401) {
       logout();
-      router.push('/');
     }
     message.error(error.message);
     return Promise.reject(error);

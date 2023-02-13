@@ -197,7 +197,7 @@ import DirCard from '@/components/pc/DirCard';
 import VideoCard from '@/components/pc/VideoCard';
 import PopupWindow from '@/components/pc/PopupWindow';
 import CategorieTree from '@/components/pc/CategorieTree';
-import { getCategories } from '@/api/categories';
+import { getCategorieList } from '@/api/categories';
 import { onlyAllowNumber } from '@/common/global';
 
 const TYPE_VIDEO = 0;

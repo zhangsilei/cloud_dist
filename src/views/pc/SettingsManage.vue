@@ -42,7 +42,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { Add } from '@vicons/ionicons5';
 import {
   NIcon,
@@ -56,39 +56,58 @@ import {
   NButton,
 } from 'naive-ui';
 import { ref } from 'vue';
+import { getSettingConfigs } from '@/api/setting';
 
-export default {
-  name: 'SettingsManage',
-  components: {
-    NIcon,
-    NInput,
-    NForm,
-    NFormItem,
-    NUpload,
-    NUploadDragger,
-    NText,
-    NP,
-    NButton,
-  },
-  setup() {
-    const websiteFormRef = ref(null);
-    const websiteFormData = ref({
-      name: '',
-    });
-    const save = () => {};
+const websiteFormRef = ref(null);
+const websiteFormData = ref({
+  name: null,
+});
+const save = () => {};
 
-    return {
-      Add,
-      websiteFormRef,
-      websiteFormData,
-      save,
-    };
-  },
-};
+async function render() {
+  const res = await getSettingConfigs();
+}
+
+render();
+
+// export default {
+//   name: 'SettingsManage',
+//   components: {
+//     NIcon,
+//     NInput,
+//     NForm,
+//     NFormItem,
+//     NUpload,
+//     NUploadDragger,
+//     NText,
+//     NP,
+//     NButton,
+//   },
+//   setup() {
+//     const websiteFormRef = ref(null);
+//     const websiteFormData = ref({
+//       name: '',
+//     });
+//     const save = () => {};
+
+//     return {
+//       Add,
+//       websiteFormRef,
+//       websiteFormData,
+//       save,
+//     };
+//   },
+// };
+//
 </script>
 
 <style lang="scss" scoped>
 .settings-manage-container {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  background: #fff;
+  box-sizing: border-box;
   .website {
     max-width: 400px;
   }

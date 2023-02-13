@@ -74,7 +74,7 @@ import {
 } from 'naive-ui';
 import { ref, reactive, watch, computed, h } from 'vue';
 import {
-  getCategories,
+  getCategorieList,
   createCategorie,
   updateCategorie,
   deleteCategorie,
@@ -99,7 +99,7 @@ let optionType = ref('');
 renderTree();
 
 async function renderTree() {
-  const res = await getCategories();
+  const res = await getCategorieList();
   loading.value = false;
   dataList.value = res.items || [];
 }
@@ -277,7 +277,7 @@ import { NMenu, NIcon, NDropdown } from 'naive-ui';
 import { RouterLink } from 'vue-router';
 import { EllipsisHorizontalSharp } from '@vicons/ionicons5';
 import { isAdmin , onlyAllowNumber, isUser} from '@/common/global';
-import { getCategories , updateCategorie, deleteCategorie} from '@/api/categories';
+import { getCategorieList , updateCategorie, deleteCategorie} from '@/api/categories';
 
 function renderIcon(icon) {
   return () => h(NIcon, null, { default: () => h(icon) });
@@ -287,7 +287,7 @@ export default {
   components: { NMenu, NDropdown },
   name: 'CategorieTree',
   async setup() {
-    const res = await getCategories();
+    const res = await getCategorieList();
     // const menuOptions = res.item
 
     return {

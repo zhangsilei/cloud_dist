@@ -3,6 +3,7 @@ import Cookies from 'js-cookie';
 const TOKEN_KEY = 'Admin-Token';
 const ROLE_KEY = 'role';
 const USER_KEY = 'user';
+const USER_ID = 'uid';
 
 export function getToken() {
   return Cookies.get(TOKEN_KEY);
@@ -38,4 +39,16 @@ export function setUser(role) {
 
 export function removeUser() {
   return Cookies.remove(USER_KEY);
+}
+
+export function getUserId() {
+  return Cookies.get(USER_ID);
+}
+
+export function setUserId(uid) {
+  return Cookies.set(USER_ID, uid);
+}
+
+export function removeUserId() {
+  return Cookies.remove(USER_ID);
 }
