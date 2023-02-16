@@ -13,11 +13,11 @@ body,
   height: 100%;
   margin: 0 auto;
 }
-@media screen and (min-width: 400px) {
-  .container {
-    max-width: 400px;
-  }
-}
+// @media screen and (min-width: 400px) {
+//   .container {
+//     max-width: 400px;
+//   }
+// }
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
