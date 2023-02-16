@@ -1,14 +1,15 @@
-import { createStore } from 'vuex'
+import { createStore } from 'vuex';
 
 export default createStore({
   state: {
+    selectedCategory: null,
   },
-  getters: {
-  },
+  getters: {},
   mutations: {
+    SET_SELECTED_CATEGORY(state, val) {
+      state.selectedCategory = val;
+    },
   },
-  actions: {
-  },
-  modules: {
-  }
-})
+  actions: {},
+  modules: {},
+});

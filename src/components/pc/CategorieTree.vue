@@ -7,12 +7,13 @@
     /> -->
     <n-spin :show="loading">
       <n-space v-if="dataList" vertical :size="12">
-        <n-input v-model:value="pattern" placeholder="搜索" />
+        <n-input v-if="isAdmin()" v-model:value="pattern" placeholder="搜索" />
         <n-tree
           :show-irrelevant-nodes="false"
           :pattern="pattern"
           :data="dataList"
           :render-suffix="renderOptions"
+          @update:selected-keys="onSelectHandle"
           children-field="items"
           key-field="id"
           label-field="name"
@@ -72,7 +73,7 @@ import {
   NIcon,
   NDropdown,
 } from 'naive-ui';
-import { ref, reactive, watch, computed, h } from 'vue';
+import { ref, reactive, watch, computed, h, onMounted } from 'vue';
 import {
   getCategorieList,
   createCategorie,
@@ -82,7 +83,8 @@ import {
 import PopupWindow from '@/components/pc/PopupWindow';
 import { onlyAllowNumber } from '@/common/global';
 import { EllipsisHorizontalSharp } from '@vicons/ionicons5';
-import { isUser } from '@/common/global';
+import { isUser, isAdmin } from '@/common/global';
+import { useStore } from 'vuex';
 
 const { message } = createDiscreteApi(['message']);
 
@@ -269,7 +271,24 @@ function renderOptions({ option }) {
     renderIcon(EllipsisHorizontalSharp, iconAttrs)
   );
 }
+
+// let store = ref(null);
+// onMounted(() => {
+//   store.value = useStore();
+// })
+
+function onSelectHandle(keys, option, meta) {
+  // store.commit('SET_SELECTED_CATEGORY', meta.node);
+  store;
+  debugger;
+}
 </script>
+
+<style lang="scss" scoped>
+.categorie-tree-container {
+  text-align: left;
+}
+</style>
 
 <!-- <script>
 import { h, ref } from 'vue';

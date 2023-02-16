@@ -51,7 +51,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import {
   NBreadcrumb,
   NBreadcrumbItem,
@@ -63,81 +63,50 @@ import {
   NGridItem,
 } from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
 import DirCard from '@/components/pc/DirCard';
 import VideoCard from '@/components/pc/VideoCard';
 
 const SORT_TYPE_DEFAULT = 0;
 const SORT_TYPE_POPULAR = 1;
+const state = reactive({
+  sortType: SORT_TYPE_DEFAULT,
+  fileNames: ['Favorite', 'Videos', 'Photos'],
+  breadcrumbs: [],
+  dataList: [
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: false },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
+  ],
+});
+const isDefault = computed(() => state.sortType === SORT_TYPE_DEFAULT);
+const isPorpular = computed(() => state.sortType === SORT_TYPE_POPULAR);
 
-export default {
-  components: {
-    NBreadcrumb,
-    NBreadcrumbItem,
-    NIcon,
-    MdCash,
-    NInput,
-    NTag,
-    NSpace,
-    NGrid,
-    NGridItem,
-    DirCard,
-    VideoCard,
-  },
-  name: 'Resource',
-  computed: {
-    isDefault() {
-      return this.state.sortType === SORT_TYPE_DEFAULT;
-    },
-    isPorpular() {
-      return this.state.sortType === SORT_TYPE_POPULAR;
-    },
-    activeStyle() {
-      return { textColor: '#ed3939', borderColor: '#ed3939' };
-    },
-  },
-  setup() {
-    const state = reactive({
-      sortType: SORT_TYPE_DEFAULT,
-      fileNames: ['Favorite', 'Videos', 'Photos'],
-      dataList: [
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: false },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-        { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-      ],
-    });
+const activeStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
 
-    return {
-      IosSearch,
-      SORT_TYPE_DEFAULT,
-      SORT_TYPE_POPULAR,
-      state,
-    };
-  },
-  methods: {
-    sort(type) {
-      this.state.sortType = type;
-    },
-  },
-};
+function sort(type) {
+  state.sortType = type;
+}
 </script>
 
 <style lang="scss" scoped>
 .resource-container {
   background: #fff;
+  width: 100%;
   height: 100%;
   padding: 10px;
+  background: #fff;
   box-sizing: border-box;
   .top {
     display: flex;

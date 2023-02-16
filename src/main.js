@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import i18n from '@/i18n';
 import { getRole, getToken } from './common/cookie';
-import { isMobile, ROLE_ADMIN, ROLE_USER } from './common/global';
+import { isAdmin, isMobile, ROLE_ADMIN, ROLE_USER } from './common/global';
 import router, { commonRoutes, mRoutes, pcRoutes } from './router';
 import store from './store';
 
@@ -22,7 +22,9 @@ router.beforeEach((to, from, next) => {
     return getToken()
       ? isMobile()
         ? '/m/resource'
-        : '/resource/manage'
+        : isAdmin()
+        ? '/resource/manage'
+        : '/resource'
       : '/signin';
   };
 

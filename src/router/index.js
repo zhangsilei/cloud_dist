@@ -66,9 +66,21 @@ export const pcRoutes = [
 export const mRoutes = [
   {
     path: '/m/resource',
-    name: 'resource',
+    name: 'mResource',
     authority: ROLE_USER,
     component: () => import('../views/m/resource.vue'),
+  },
+  {
+    path: '/m/resource/list',
+    name: 'mResourceList',
+    authority: ROLE_USER,
+    component: () => import('../views/m/ResourceList.vue'),
+  },
+  {
+    path: '/m/resource/detail',
+    name: 'mResourceDetail',
+    authority: ROLE_USER,
+    component: () => import('../views/m/ResourceDetail.vue'),
   },
 ];
 

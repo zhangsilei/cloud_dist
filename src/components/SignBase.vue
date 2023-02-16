@@ -214,4 +214,9 @@ export default defineComponent({
     }
   }
 }
+@media screen and (max-width: 400px) {
+  .signbase-container {
+    width: 80%;
+  }
+}
 </style>

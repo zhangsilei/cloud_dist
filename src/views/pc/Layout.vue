@@ -94,7 +94,7 @@ import { ref, reactive } from 'vue';
 import MenuBar from '@/components/pc/MenuBar';
 import CategorieTree from '@/components/pc/CategorieTree';
 import PopupWindow from '@/components/pc/PopupWindow';
-import { isUser, isAdmin , logout} from '@/common/global';
+import { isUser, isAdmin, logout } from '@/common/global';
 import { getUser, getUserId } from '@/common/cookie';
 import { updateUser } from '@/api/user';
 import router from '@/router';
@@ -149,7 +149,6 @@ export default {
       if (key === TYPE_MODPWD) {
         isShowPwdAlert.value = true;
       } else if (key === TYPE_LOGOUT) {
-        
       }
     };
 
