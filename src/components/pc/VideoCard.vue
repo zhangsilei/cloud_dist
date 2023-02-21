@@ -1,14 +1,18 @@
 <template>
   <div class="video-card-container">
     <div class="card">
-      <img
-        class="poster"
-        src="https://img2.baidu.com/it/u=1882482103,2575197468&fm=253&fmt=auto&app=138&f=JPEG?w=750&h=500"
-      />
+      <img class="poster" :src="poster" />
       <div class="info">
-        <n-icon :component="IosHeart" color="#fff" />
-        <span class="like-num">123</span>
-        <n-icon :component="VideoClip20Filled" color="#fff" />
+        <n-icon :component="IosHeart" color="#999" />
+        <span class="like-num">{{ likeNum }}</span>
+        <n-icon
+          :component="VideoClip20Filled"
+          color="#999"
+          style="margin-right: 10px"
+        />
+        <n-dropdown trigger="hover" :options="options" @select="handleSelect">
+          <n-icon :component="MessageFilled" color="#999" />
+        </n-dropdown>
       </div>
       <div
         v-if="!authority"
@@ -66,17 +70,40 @@
 </template>
 
 <script>
-import { NIcon, NModal, NForm, NFormItem, NInput, NButton } from 'naive-ui';
+import {
+  NIcon,
+  NModal,
+  NForm,
+  NFormItem,
+  NInput,
+  NButton,
+  NDropdown,
+} from 'naive-ui';
 import { ref, reactive, onMounted } from 'vue';
 import { IosHeart } from '@vicons/ionicons4';
 import { VideoClip20Filled } from '@vicons/fluent';
+import { MessageFilled } from '@vicons/antd';
 import PopupWindow from '@/components/pc/PopupWindow';
 import Clipboard from 'clipboard';
 
 export default {
   name: 'VideoCard',
-  components: { NIcon, NModal, NForm, NFormItem, NInput, NButton, PopupWindow },
+  components: {
+    NIcon,
+    NModal,
+    NForm,
+    NFormItem,
+    NInput,
+    NButton,
+    NDropdown,
+    PopupWindow,
+  },
   props: {
+    id: {
+      required: true,
+      type: Number,
+      default: 0,
+    },
     likeNum: {
       required: true,
       type: Number,
@@ -92,6 +119,11 @@ export default {
       type: Boolean,
       default: false,
     },
+    poster: {
+      required: true,
+      type: String,
+      default: '',
+    },
   },
   watch: {
     isShowCdkeyAlert(val) {
@@ -100,7 +132,7 @@ export default {
       }
     },
   },
-  setup() {
+  setup(props, context) {
     const formData = reactive({ cdKey: '' });
     const formRef = ref(null);
     const isShowCdkeyAlert = ref(false);
@@ -142,9 +174,24 @@ export default {
       initClipboard();
     });
 
+    const TYPE_EDIT = 0;
+    const TYPE_DETAIL = 1;
+    const TYPE_DELETE = 2;
+
+    function handleSelect(key) {
+      if (key === TYPE_EDIT) {
+        context.emit('onEdit');
+      } else if (key === TYPE_DETAIL) {
+        context.emit('onDetail');
+      } else if (key === TYPE_DELETE) {
+        context.emit('onDelete');
+      }
+    }
+
     return {
       IosHeart,
       VideoClip20Filled,
+      MessageFilled,
       isShowAction: ref(false),
       isShowCdkeyAlert,
       isShowContactAlert,
@@ -161,6 +208,21 @@ export default {
       copyContactBtn,
       setCdkey,
       copyContact,
+      options: [
+        {
+          label: '编辑',
+          key: TYPE_EDIT,
+        },
+        {
+          label: '详细信息',
+          key: TYPE_DETAIL,
+        },
+        {
+          label: '删除',
+          key: TYPE_DELETE,
+        },
+      ],
+      handleSelect,
     };
   },
 };
@@ -192,6 +254,7 @@ export default {
       line-height: 14px;
       .like-num {
         margin-right: 10px;
+        color: #999;
       }
     }
     .mask {

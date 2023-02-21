@@ -3,8 +3,9 @@
     <n-space class="filter">
       <n-form-item label-placement="left" label="关键字">
         <n-input
-          v-model:value="filter.query"
+          v-model:value="userParams.key"
           placeholder="用户名/用户ID/激活码"
+          clearable
         ></n-input>
       </n-form-item>
       <n-form-item label-placement="left">
@@ -15,14 +16,21 @@
       </n-form-item>
     </n-space>
 
-    <n-data-table
-      :max-height="tableMaxHeight"
-      :loading="loading"
-      :columns="columns"
-      :data="userList"
-      :pagination="true"
-      :bordered="false"
-    />
+    <div style="display: flex; flex-direction: column">
+      <n-data-table
+        :max-height="tableMaxHeight"
+        :loading="loading"
+        :columns="columns"
+        :data="userList"
+        :bordered="false"
+      />
+      <n-pagination
+        v-model:page="userParams.page_num"
+        :item-count="total"
+        :on-update:page="changePage"
+        style="align-self: flex-end; margin-top: 10px"
+      />
+    </div>
 
     <popup-window
       v-model="isShowPwdAlert"
@@ -45,17 +53,21 @@ import {
   NButton,
   NDataTable,
   NSpace,
+  NPagination,
 } from 'naive-ui';
 import { ref, h, onMounted, reactive, computed } from 'vue';
 import PopupWindow from '@/components/pc/PopupWindow.vue';
 import { getUserList, updateUser } from '@/api/user';
 import { getTableMaxHeight } from '@/common/global';
 
-const filter = reactive({ query: null });
+function query() {
+  userParams.value.page_num = 1;
+  renderUserList();
+}
 
-function query() {}
-
-function reset() {}
+function reset() {
+  userParams.value.key = null;
+}
 
 let userList = ref([]);
 let loading = ref(true);
@@ -63,9 +75,11 @@ let tableMaxHeight = ref(0);
 let isShowPwdAlert = ref(false);
 let selectedRow = ref(null);
 
+const total = ref(0);
 const userParams = ref({
   page_num: 1,
   page_size: 10,
+  key: null,
 });
 const columns = [
   {
@@ -77,6 +91,22 @@ const columns = [
     key: 'user_name',
   },
   {
+    title: '激活码数量',
+    key: 'activation_code_num',
+    render(row) {
+      return h(
+        'span',
+        {
+          style: {
+            color: 'rgb(24, 160, 88)',
+            cursor: 'pointer',
+          },
+        },
+        row.activation_code_num
+      );
+    },
+  },
+  {
     title: '用户类型',
     key: 'user_type',
   },
@@ -85,16 +115,6 @@ const columns = [
     key: 'action',
     render(row) {
       return h('div', { style: { color: '#18a058', cursor: 'pointer' } }, [
-        h(
-          'span',
-          {
-            style: { 'margin-right': '10px' },
-            onClick: () => {
-              // TODO: 跳转到详情页
-            },
-          },
-          '详情'
-        ),
         h(
           'span',
           {
@@ -129,6 +149,12 @@ async function renderUserList() {
   const res = await getUserList(userParams.value);
   userList.value = res.users || [];
   loading.value = false;
+  total.value = res.total;
+}
+
+function changePage(page) {
+  userParams.value.page_num = page;
+  renderUserList();
 }
 
 renderUserList();

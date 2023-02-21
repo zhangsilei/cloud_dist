@@ -13,7 +13,7 @@
       </template>
     </n-page-header>
 
-    <template v-if="type == 1">
+    <!-- <template v-if="type == 1">
       <video controls>
         <source
           src="https://www.runoob.com/try/demo_source/movie.mp4"
@@ -24,34 +24,37 @@
     </template>
     <template v-else-if="type == 2">
       <img class="large-img" :src="currentResource.url" />
-      <!-- <swiper
-        
-
-    </template>
-      :effect="'coverflow'"
-      :grabCursor="true"
-      :centeredSlides="true"
-      :slidesPerView="'auto'"
-      :coverflowEffect="{
-        rotate: 50,
-        stretch: 0,
-        depth: 100,
-        modifier: 1,
-        slideShadows: true,
-      }"
-      :pagination="true"
-      :modules="modules"
-      style="flex: 1; margin-top: 20px"
+    </template> -->
+    <swiper
+      :direction="'vertical'"
       class="mySwiper"
+      @slideChange="onSourceChange"
     >
       <swiper-slide>
-        <img
-          class="slide-img"
-          src="https://swiperjs.com/demos/images/nature-1.jpg"
-        />
+        <img src="https://img95.699pic.com/photo/50008/9194.jpg_wh860.jpg" />
       </swiper-slide>
-    </swiper> -->
-    </template>
+      <swiper-slide>
+        <video controls controlsList="nodownload" autoplay>
+          <source
+            src="https://www.runoob.com/try/demo_source/movie.mp4"
+            type="video/mp4"
+          />
+          您的浏览器不支持Video标签。
+        </video>
+      </swiper-slide>
+      <swiper-slide>
+        <img src="https://img95.699pic.com/photo/50008/9194.jpg_wh860.jpg" />
+      </swiper-slide>
+      <swiper-slide>
+        <video controls controlsList="nodownload">
+          <source
+            src="https://www.runoob.com/try/demo_source/movie.mp4"
+            type="video/mp4"
+          />
+          您的浏览器不支持Video标签。
+        </video>
+      </swiper-slide>
+    </swiper>
   </div>
 </template>
 
@@ -79,21 +82,20 @@ import { parse } from 'qs';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 // Import Swiper styles
 import 'swiper/css';
-import 'swiper/css/effect-coverflow';
-import 'swiper/css/pagination';
-// import required modules
-import { EffectCoverflow, Pagination } from 'swiper';
 
 const router = useRouter();
 const route = useRoute();
 
-const totalNum = 9;
-const currentNum = 1;
+let totalNum = 9;
+let currentNum = ref(1);
 const title = computed(() => {
-  return currentNum + '/' + totalNum;
+  return currentNum.value + '/' + totalNum;
 });
 const currentResource = ref(null);
-const modules = [EffectCoverflow, Pagination];
+
+function onSourceChange(swiper) {
+  currentNum.value = swiper.activeIndex + 1;
+}
 
 const queryObj = parse(route.query);
 queryObj.list = parse(queryObj.list);
@@ -127,12 +129,34 @@ function handleBack() {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  .large-img {
-    width: 98%;
-    margin: 0 auto;
-  }
-  .slide-img {
+  // .large-img {
+  //   width: 98%;
+  //   margin: 0 auto;
+  // }
+  // .slide-img {
+  //   height: 100%;
+  // }
+  .swiper {
+    width: 100%;
     height: 100%;
+  }
+
+  .swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background: #000;
+
+    /* Center slide text vertically */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 }
 </style>

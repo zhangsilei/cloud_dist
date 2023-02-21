@@ -3,22 +3,28 @@
     <n-space class="filter">
       <n-form-item label-placement="left" label="激活分区">
         <n-select
-          v-model:value="filter.status"
+          v-model:value="activationParams.category_id"
           label-field="name"
           value-field="id"
           :options="categoryListWithOneLevel"
           style="width: 150px"
+          clearable
         />
       </n-form-item>
       <n-form-item label-placement="left" label="状态">
         <n-select
-          v-model:value="filter.status"
+          v-model:value="activationParams.activated"
           :options="statusOptions"
           style="width: 150px"
+          clearable
         />
       </n-form-item>
       <n-form-item label-placement="left" label="关键字">
-        <n-input v-model:value="filter.query" placeholder="激活码"></n-input>
+        <n-input
+          v-model:value="activationParams.key"
+          placeholder="激活码"
+          clearable
+        ></n-input>
       </n-form-item>
       <n-form-item label-placement="left">
         <n-button type="primary" @click="query"> 查询 </n-button>
@@ -87,15 +93,22 @@
       </n-button>
     </div> -->
 
-    <n-data-table
-      :loading="loading"
-      :columns="columns"
-      :data="data"
-      :pagination="true"
-      :bordered="false"
-      :on-update:page="(page) => (activationParams.page_num = page)"
-      :on-update:page-size="(size) => (activationParams.page_size = size)"
-    />
+    <div style="display: flex; flex-direction: column">
+      <n-data-table
+        :loading="loading"
+        :columns="columns"
+        :data="dataList"
+        :bordered="false"
+        :on-update:page="(page) => (activationParams.page_num = page)"
+        :on-update:page-size="(size) => (activationParams.page_size = size)"
+      />
+      <n-pagination
+        v-model:page="activationParams.page_num"
+        :item-count="total"
+        :on-update:page="changePage"
+        style="align-self: flex-end; margin-top: 10px"
+      />
+    </div>
 
     <popup-window
       v-model="activation.isShow"
@@ -148,16 +161,18 @@ import {
   NButton,
   NInputNumber,
   NDataTable,
+  NPagination,
 } from 'naive-ui';
 import { ref, h, reactive, watch } from 'vue';
 import PopupWindow from '@/components/pc/PopupWindow';
 import { getCategorieList } from '@/api/categories';
 import { createActivationCode, getActivationCodeList } from '@/api/activation';
+import moment from 'moment';
 
 const { message } = createDiscreteApi(['message']);
 
-const TYPE_USED = 0;
-const TYPE_UNUSED = 1;
+const TYPE_USED = true;
+const TYPE_UNUSED = false;
 const statusOptions = [
   {
     label: '已使用',
@@ -205,19 +220,22 @@ const validDurationOptions = [
 const columns = [
   {
     title: '编号',
-    key: 'id',
+    key: 'activation_code.id',
   },
   {
     title: '激活码',
-    key: 'code',
+    key: 'activation_code.code',
   },
   {
     title: '激活分区',
-    key: 'category_id',
+    key: 'category.name',
   },
   {
     title: '有效期',
-    key: 'valid_duration',
+    key: 'activation_code.valid_duration',
+    render(row) {
+      return h('span', null, row.activation_code.valid_duration + '天');
+    },
   },
   {
     title: '状态',
@@ -227,29 +245,46 @@ const columns = [
         'span',
         {
           style: {
-            color: row.use_time ? 'red' : 'green',
+            color: row.activation_code.user_id ? 'red' : 'green',
           },
         },
-        row.use_time ? '已使用' : '未使用'
+        row.activation_code.user_id ? '已使用' : '未使用'
       );
     },
   },
   {
     title: '创建时间',
     key: 'created_time',
+    render(row) {
+      return h(
+        'span',
+        null,
+        moment(row.activation_code.created_time * 1000).format(
+          'YYYY-MM-DD HH:mm:ss'
+        ) || '--'
+      );
+    },
   },
   {
     title: '用户ID',
     key: 'user_id',
     render(row) {
-      return h('span', null, row.user_id || '--');
+      return h('span', null, row.activation_code.user_id || '--');
     },
   },
   {
     title: '使用时间',
     key: 'use_time',
     render(row) {
-      return h('span', null, row.use_time || '--');
+      return h(
+        'span',
+        null,
+        row.activation_code.use_time
+          ? moment(row.activation_code.use_time * 1000).format(
+              'YYYY-MM-DD HH:mm:ss'
+            )
+          : '--'
+      );
     },
   },
 ];
@@ -265,12 +300,15 @@ async function getCategoryListWithOneLevel() {
   loading.value = false;
 }
 
-const filter = reactive({
-  status: null,
-  query: null,
-});
-const query = () => {};
-const reset = () => {};
+const query = () => {
+  activationParams.value.page_num = 1;
+  renderActivationList();
+};
+const reset = () => {
+  activationParams.value.category_id = null;
+  activationParams.value.activated = null;
+  activationParams.value.key = null;
+};
 
 const activationRef = ref(null);
 const activation = reactive({
@@ -312,7 +350,9 @@ function onActivationConfirm() {
             activation.formData.activation_code_count
           ),
         });
+        activation.isShow = false;
         message.success('操作成功！');
+        renderActivationList();
       }
     })
     .catch();
@@ -334,12 +374,23 @@ watch(
 const activationParams = ref({
   page_num: 1,
   page_size: 10,
+  category_id: null,
+  activated: null,
+  key: null,
 });
+const total = ref(0);
 
+const dataList = ref([]);
 
 async function renderActivationList() {
   const res = await getActivationCodeList(activationParams.value);
-  // debugger;
+  dataList.value = res.activation_codes || [];
+  total.value = res.total;
+}
+
+function changePage(page) {
+  activationParams.value.page_num = page;
+  renderActivationList();
 }
 
 renderActivationList();

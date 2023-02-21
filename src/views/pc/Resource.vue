@@ -2,8 +2,10 @@
   <div class="resource-container">
     <div class="top">
       <n-breadcrumb separator=">">
-        <n-breadcrumb-item> Game </n-breadcrumb-item>
-        <n-breadcrumb-item> Mobile game </n-breadcrumb-item>
+        <n-breadcrumb-item v-for="(item, index) in breadcrumbCategory">
+          {{ item }}
+          <span v-if="index !== breadcrumbCategory.length - 1">/</span>
+        </n-breadcrumb-item>
       </n-breadcrumb>
       <n-input round placeholder="Search">
         <template #prefix>
@@ -63,9 +65,12 @@ import {
   NGridItem,
 } from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
-import { reactive, computed } from 'vue';
+import { reactive, computed, watch } from 'vue';
 import DirCard from '@/components/pc/DirCard';
 import VideoCard from '@/components/pc/VideoCard';
+import { useStore } from 'vuex';
+
+const store = useStore();
 
 const SORT_TYPE_DEFAULT = 0;
 const SORT_TYPE_POPULAR = 1;
@@ -94,10 +99,39 @@ const isDefault = computed(() => state.sortType === SORT_TYPE_DEFAULT);
 const isPorpular = computed(() => state.sortType === SORT_TYPE_POPULAR);
 
 const activeStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
+const selectedCategory = ref(null);
+const breadcrumbCategory = ref([]);
 
 function sort(type) {
   state.sortType = type;
 }
+
+function filterTableMater(id, arr) {
+  const queue = [...arr];
+  while (queue.length) {
+    const o = queue.shift();
+    if (o.id === id) return o;
+    queue.push(...(o.items || []));
+  }
+}
+
+function getBreadcrumbCategory(arr, id, result = []) {
+  const re = filterTableMater(id, arr);
+  result.unshift(re.name);
+  if (re.parent_category_id) {
+    return getBreadcrumbCategory(arr, re.parent_category_id, result);
+  }
+  return result;
+}
+
+watch(store.state, (val) => {
+  selectedCategory.value = val.selectedCategory;
+  breadcrumbCategory.value = getBreadcrumbCategory(
+    val.allCategories,
+    val.selectedCategory
+  );
+  renderResources();
+});
 </script>
 
 <style lang="scss" scoped>

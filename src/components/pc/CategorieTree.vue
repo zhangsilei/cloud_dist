@@ -13,6 +13,9 @@
           :pattern="pattern"
           :data="dataList"
           :render-suffix="renderOptions"
+          :default-selected-keys="defaultSelectedKeys"
+          :default-expanded-keys="defaultExpandedKeys"
+          :expand-on-click="true"
           @update:selected-keys="onSelectHandle"
           children-field="items"
           key-field="id"
@@ -86,6 +89,7 @@ import { EllipsisHorizontalSharp } from '@vicons/ionicons5';
 import { isUser, isAdmin } from '@/common/global';
 import { useStore } from 'vuex';
 
+const store = useStore();
 const { message } = createDiscreteApi(['message']);
 
 const CREATE_CATEGORIE = 0;
@@ -97,6 +101,8 @@ let loading = ref(true);
 let selectedRow = ref(null);
 let dataList = ref(null);
 let optionType = ref('');
+let defaultSelectedKeys = reactive([]);
+let defaultExpandedKeys = reactive([]);
 
 renderTree();
 
@@ -104,6 +110,12 @@ async function renderTree() {
   const res = await getCategorieList();
   loading.value = false;
   dataList.value = res.items || [];
+  if (dataList.value.length) {
+    defaultSelectedKeys.push(dataList.value[0].id);
+    defaultExpandedKeys.push(dataList.value[0].id);
+    store.commit('SET_SELECTED_CATEGORY', dataList.value[0].id);
+    store.commit('SET_ALL_CATEGORIES', dataList.value);
+  }
 }
 
 const categorieRef = ref(null);
@@ -272,15 +284,8 @@ function renderOptions({ option }) {
   );
 }
 
-// let store = ref(null);
-// onMounted(() => {
-//   store.value = useStore();
-// })
-
 function onSelectHandle(keys, option, meta) {
-  // store.commit('SET_SELECTED_CATEGORY', meta.node);
-  store;
-  debugger;
+  store.commit('SET_SELECTED_CATEGORY', keys[0]);
 }
 </script>
 

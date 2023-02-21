@@ -8,7 +8,7 @@
           <n-input v-model:value="filter.query"></n-input>
         </n-form-item>
         <n-form-item label-placement="left">
-          <n-button type="primary" @click="query"> 查询 </n-button>
+          <n-button type="primary" @click="queryList"> 查询 </n-button>
         </n-form-item>
         <n-form-item label-placement="left">
           <n-button @click="reset"> 重置 </n-button>
@@ -23,6 +23,37 @@
           上传图片
         </n-button>
       </n-space>
+
+      <div class="content">
+        <n-empty
+          v-if="!dataList.length"
+          description="暂无数据"
+          style="margin-top: 100px; flex: 1"
+        ></n-empty>
+        <n-grid v-else :x-gap="8" :y-gap="8" :cols="8" style="margin-top: 10px">
+          <n-grid-item v-for="(item, index) in dataList" :key="index">
+            <video-card
+              :id="item.id"
+              :file-name="item.name"
+              :like-num="item.like_num"
+              :authority="true"
+              :poster="
+                isLocal
+                  ? 'http://116.63.139.2' + item.picture_url
+                  : item.picture_url
+              "
+              @on-edit="editRes(item)"
+              @on-detail="detailResource(item)"
+              @on-delete="deleteRes(item)"
+            ></video-card>
+          </n-grid-item>
+        </n-grid>
+        <n-pagination
+          style="justify-content: flex-end"
+          v-model:page="query.page_num"
+          :page-count="pageCount"
+        />
+      </div>
     </div>
 
     <popup-window
@@ -38,21 +69,21 @@
         label-width="auto"
         require-mark-placement="right-hanging"
       >
-        <n-form-item label="所在分区"> 一级分区/二级分区 </n-form-item>
+        <n-form-item label="所在分区">
+          <span v-for="(item, index) in breadcrumbCategory">
+            {{ item }}
+            <span v-if="index !== breadcrumbCategory.length - 1">/</span>
+          </span>
+        </n-form-item>
         <n-form-item label="名称" path="name">
           <n-input v-model:value="resource.formData.name" />
         </n-form-item>
         <n-form-item
           v-if="resource.type === TYPE_VIDEO"
           label="视频"
-          path="description"
+          path="video_url"
         >
-          <n-upload
-            multiple
-            directory-dnd
-            action="https://www.mocky.io/v2/5e4bafc63100007100d8b70f"
-            :max="5"
-          >
+          <n-upload directory-dnd @change="onUpload">
             <n-upload-dragger>
               <div style="margin-bottom: 12px">
                 <n-icon size="48" :depth="3">
@@ -66,30 +97,42 @@
             </n-upload-dragger>
           </n-upload>
         </n-form-item>
-        <n-form-item label="封面图片" path="pic">
-          <n-upload
-            multiple
-            directory-dnd
-            action="https://www.mocky.io/v2/5e4bafc63100007100d8b70f"
-            :max="5"
-          >
-            <n-upload-dragger>
-              <div style="margin-bottom: 12px">
-                <n-icon size="48" :depth="3">
-                  <Photo />
-                </n-icon>
-              </div>
-              <n-text style="font-size: 14px"> 添加照片 </n-text>
-              <n-p depth="3" style="margin: 8px 0 0 0">
-                （图片大小不超过100M）
-              </n-p>
-            </n-upload-dragger>
-          </n-upload>
-        </n-form-item>
         <n-form-item label="描述" path="description">
           <n-input v-model:value="resource.formData.description" />
         </n-form-item>
       </n-form>
+    </popup-window>
+
+    <popup-window
+      v-model="detail.isShow"
+      title="详细信息"
+      :isShowFooter="false"
+    >
+      <div style="display: flex">
+        <div>
+          <img
+            style="width: 250px; margin-right: 15px"
+            :src="detail.picture_url"
+          />
+        </div>
+        <div>
+          <n-form-item label-placement="left" label="名称">
+            <div>{{ detail.name }}</div>
+          </n-form-item>
+          <n-form-item label-placement="left" label="位置">
+            <span v-for="(item, index) in detail.breadcrumbCategory">
+              {{ item }}
+              <span v-if="index !== breadcrumbCategory.length - 1">/</span>
+            </span>
+          </n-form-item>
+          <n-form-item label-placement="left" label="上传时间">
+            <div>{{ detail.created_time }}</div>
+          </n-form-item>
+          <n-form-item label-placement="left" label="最后修改时间">
+            <div>{{ detail.updated_time }}</div>
+          </n-form-item>
+        </div>
+      </div>
     </popup-window>
 
     <!-- <n-spin :show="loading">
@@ -172,6 +215,7 @@
 
 <script setup>
 import {
+  createDiscreteApi,
   NBreadcrumb,
   NBreadcrumbItem,
   NIcon,
@@ -189,8 +233,11 @@ import {
   NUploadDragger,
   NText,
   NP,
+  NPagination,
+  NImage,
+  useDialog,
 } from 'naive-ui';
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { CameraOutline } from '@vicons/ionicons5';
 import { Photo } from '@vicons/tabler';
 import DirCard from '@/components/pc/DirCard';
@@ -198,7 +245,20 @@ import VideoCard from '@/components/pc/VideoCard';
 import PopupWindow from '@/components/pc/PopupWindow';
 import CategorieTree from '@/components/pc/CategorieTree';
 import { getCategorieList } from '@/api/categories';
+import { postVideo } from '@/api/file';
 import { onlyAllowNumber } from '@/common/global';
+import {
+  getResourceList,
+  createResource,
+  getResourceDetail,
+  deleteResource,
+  updateResource,
+} from '@/api/resource';
+import { useStore } from 'vuex';
+import moment from 'moment';
+
+const store = useStore();
+const { message, dialog } = createDiscreteApi(['message', 'dialog']);
 
 const TYPE_VIDEO = 0;
 const TYPE_IMAGE = 1;
@@ -207,22 +267,206 @@ const filter = reactive({ query: '' });
 const resourceRef = ref(null);
 const resource = reactive({
   isShow: false,
+  isEdit: false,
   title: '上传视频',
   type: null,
   formData: ref({
+    category_id: null,
+    resourceType: null,
     name: null,
     description: null,
-    pic: null,
+    picture_url: null,
+    video_url: null,
   }),
+  rules: {
+    name: {
+      required: true,
+      trigger: ['blur', 'input'],
+      message: '请输入名称',
+    },
+    video_url: {
+      required: true,
+      trigger: ['blur', 'change'],
+      message: '请上传资源',
+    },
+  },
 });
+const dataList = ref([]);
+const loading = ref(true);
+const selectedCategory = ref(null);
+const breadcrumbCategory = ref([]);
+const uplodFile = ref(null);
 
-function onResourceConfirm() {}
+function onUpload({ file }) {
+  uplodFile.value = file;
+  file.status = 'uploading';
+  file.percentage = 0;
+  const timer = setInterval(() => {
+    if (uplodFile.value.status === 'finished') {
+      clearInterval(timer);
+      return;
+    }
+    uplodFile.value.percentage += Math.random() * 30;
+  }, 1000);
+  postVideo(file).then(({ picture_url, video_url }) => {
+    resource.formData.picture_url = picture_url;
+    resource.formData.video_url = video_url;
+    uplodFile.value.percentage = 100;
+    setTimeout(() => {
+      uplodFile.value.status = 'finished';
+    }, 0);
+  });
+}
+
+const isLocal = location.hostname === 'localhost';
+
+function onResourceConfirm() {
+  resourceRef.value
+    ?.validate(async (errors) => {
+      if (!errors) {
+        if (!resource.isEdit) {
+          await createResource(resource.formData);
+        } else {
+          await updateResource(
+            resource.formData.category_id,
+            resource.formData
+          );
+        }
+        resource.isShow = false;
+        message.success('操作成功！');
+        renderResources();
+      }
+    })
+    .catch();
+}
 
 function onClickUpload(type) {
   resource.type = type;
   resource.isShow = true;
+  resource.formData.resourceType = type;
+  resource.isEdit = false;
 }
 
+const pageCount = ref(null);
+const query = reactive({
+  page_num: 1,
+  page_size: 10,
+  category_id: null,
+  // order_by: '',
+  // order_type: '',
+});
+
+function queryList() {
+  renderResources();
+}
+
+function reset() {}
+
+async function renderResources() {
+  query.category_id = selectedCategory.value;
+  const res = await getResourceList(query);
+  dataList.value = res.resources || [];
+  pageCount.value =
+    res.total % query.page_size
+      ? res.total / query.page_size
+      : res.total / query.page_size + 1;
+  loading.value = false;
+}
+
+function filterTableMater(id, arr) {
+  const queue = [...arr];
+  while (queue.length) {
+    const o = queue.shift();
+    if (o.id === id) return o;
+    queue.push(...(o.items || []));
+  }
+}
+
+function getBreadcrumbCategory(arr, id, result = []) {
+  const re = filterTableMater(id, arr);
+  if (!re) return result;
+  result.unshift(re.name);
+  if (re.parent_category_id) {
+    return getBreadcrumbCategory(arr, re.parent_category_id, result);
+  }
+  return result;
+}
+
+watch(store.state, (val) => {
+  selectedCategory.value = val.selectedCategory;
+  breadcrumbCategory.value = getBreadcrumbCategory(
+    val.allCategories,
+    val.selectedCategory
+  );
+  resource.formData.category_id = val.selectedCategory;
+  // query.category_id = val.selectedCategory;
+  renderResources();
+});
+
+watch(
+  () => resource.isShow,
+  (val) => {
+    if (!val) {
+      for (const key in resource.formData) {
+        if (Object.hasOwnProperty.call(resource.formData, key)) {
+          resource.formData[key] = null;
+        }
+      }
+    }
+  }
+);
+
+const detail = reactive({
+  isShow: false,
+  picture_url: '',
+  name: '',
+  created_time: '',
+  updated_time: '',
+  breadcrumbCategory: [],
+});
+
+function editRes(item) {
+  resource.formData.category_id = item.id;
+  resource.formData.name = item.name;
+  resource.formData.picture_url = item.picture_url;
+  resource.formData.video_url = item.video_url;
+  resource.formData.resourceType = item.resource_type;
+  resource.type = item.resource_type;
+  resource.isShow = true;
+  resource.isEdit = true;
+}
+async function detailResource(item) {
+  const res = await getResourceDetail(item.id);
+  detail.picture_url =
+    location.hostname === 'localhost'
+      ? 'http://116.63.139.2' + res.picture_url
+      : res.picture_url;
+  detail.name = res.name;
+  detail.breadcrumbCategory = getBreadcrumbCategory(
+    store.state.allCategories,
+    store.state.selectedCategory
+  );
+  detail.created_time = moment(res.created_time * 1000).format(
+    'YYYY-MM-DD HH:mm:ss'
+  );
+  detail.updated_time = moment(res.updated_time * 1000).format(
+    'YYYY-MM-DD HH:mm:ss'
+  );
+  detail.isShow = true;
+}
+function deleteRes(item) {
+  dialog.warning({
+    content: '确认删除资源？',
+    positiveText: '确定',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      await deleteResource(item.id);
+      message.success('操作成功！');
+      renderResources();
+    },
+    onNegativeClick: () => {},
+  });
+}
 // let isShowUpload = ref(false);
 // const state = reactive({
 //   dataList: [
@@ -260,6 +504,9 @@ function onClickUpload(type) {
   }
   .resource-wrap {
     padding-left: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .empty-data {
@@ -275,6 +522,9 @@ function onClickUpload(type) {
   .action {
   }
   .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>

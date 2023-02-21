@@ -47,3 +47,11 @@ export const getTableMaxHeight = (
   }
   return containerHeight.offsetHeight - otherDomsHeight;
 };
+
+export function resetParams(obj) {
+  for (const key in obj) {
+    if (Object.hasOwnProperty.call(obj, key)) {
+      obj[key] = null;
+    }
+  }
+}
