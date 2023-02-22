@@ -1,6 +1,7 @@
 <template>
   <div class="resource-container">
-    <div class="header">
+    <!-- 头部搜索 -->
+    <div class="search-wrap">
       <n-input round placeholder="搜索">
         <template #prefix>
           <n-icon :component="IosSearch" />
@@ -10,72 +11,89 @@
         class="user"
         round
         src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
+        @click="navigateToUser"
       />
     </div>
-
-    <div class="category">
+    <!-- 分类标签 -->
+    <div class="tags-wrap">
       <n-tag
-        v-for="item in checkList"
+        v-for="item in tags"
         size="small"
         round
-        :color="selectedTag.id === item.id ? activeStyle : undefined"
-        @click="selectCatogry(item)"
+        :color="selectedTag.id === item.id ? activeTagStyle : undefined"
+        @click="changeTag(item)"
       >
-        Game1
+        {{ item.name }}
       </n-tag>
     </div>
-
-    <div class="content">
-      <div class="item" v-for="item in dataList" @click="navigateToList(item)">
-        <n-image
-          class="img"
-          width="35"
-          src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-          preview-disabled
-        />
-        <div>分区1</div>
-      </div>
+    <!-- 子分类列表 -->
+    <div class="list-wrap">
+      <n-grid x-gap="12" y-gap="12" :cols="4">
+        <n-gi v-for="item in dataList" @click="navigateToList(item)">
+          <img class="poster" :src="parseUrlToPath(item.picture_url)" />
+          <div>{{ item.name }}</div>
+        </n-gi>
+      </n-grid>
     </div>
   </div>
 </template>
 
 <script setup>
-import { NTag, NInput, NAvatar, NIcon, NImage } from 'naive-ui';
+import { NTag, NInput, NAvatar, NIcon, NImage, NGrid, NGi } from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
-import { ref } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { getCategorieList } from '@/api/categories';
+import { getResourceList } from '@/api/resource';
+import { parseUrlToPath } from '@/common/global';
 
 const router = useRouter();
 
-const dataList = [
-  {
-    id: 2,
-    id: 3,
-  },
-];
+// 头部搜索
+function navigateToUser() {
+  router.push('/m/profile');
+}
+
+// 分类标签
+const tags = ref(null);
 const selectedTag = ref(null);
-const checkList = [
-  {
-    id: 0,
-  },
-  {
-    id: 1,
-  },
-];
+const activeTagStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
 
-selectedTag.value = checkList[0];
+async function renderTags() {
+  const res = await getCategorieList();
+  tags.value = res.items || [];
+  selectedTag.value = res.items[0] || {};
+}
 
-const activeStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
-
-function selectCatogry(item) {
+function changeTag(item) {
   selectedTag.value = item;
 }
 
+renderTags();
+
+// 子分类列表
+const dataList = ref(null);
+const dataListParams = reactive({
+  page_num: 1,
+  page_size: 10,
+  category_id: null,
+});
+
+async function renderList() {
+  const res = await getResourceList(dataListParams);
+  dataList.value = res.resources || [];
+}
+
+watch(selectedTag, (val) => {
+  // TODO: 加了category_id会报500
+  // dataListParams.category_id = val.id;
+  renderList();
+});
+
 function navigateToList(item) {
-  selectCatogry.value = item;
   router.push({
     path: '/m/resource/list',
-    query: { id: item.id },
+    query: { category_id: item.id, name: item.name },
   });
 }
 </script>
@@ -91,17 +109,18 @@ function navigateToList(item) {
   text-align: left;
   display: flex;
   flex-direction: column;
-  .header {
+  .search-wrap {
     display: flex;
     justify-content: space-between;
     align-items: center;
     .user {
       margin-left: 10px;
-      width: auto;
+      min-width: 34px;
     }
   }
-  .category {
+  .tags-wrap {
     margin-top: 15px;
+    margin-bottom: 15px;
     display: flex;
     flex-wrap: wrap;
     width: 100%;
@@ -111,20 +130,12 @@ function navigateToList(item) {
       margin-right: 10px;
     }
   }
-  .content {
-    margin-top: 10px;
-    display: flex;
-    flex-wrap: wrap;
+  .list-wrap {
     text-align: center;
-    overflow-y: scroll;
-    flex: 1;
-    .item {
-      width: 25%;
-      text-align: center;
-      margin-bottom: 10px;
-      .img {
-        border-radius: 50%;
-      }
+    .poster {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
     }
   }
 }

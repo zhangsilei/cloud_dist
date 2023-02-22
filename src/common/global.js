@@ -55,3 +55,22 @@ export function resetParams(obj) {
     }
   }
 }
+
+export function parseUrlToPath(url) {
+  const testEnv = 'http://116.63.139.2/';
+  const prodEnv = 'http://176.123.9.123:8080/';
+
+  const isServer = () => location.hostname !== 'localhost';
+  const endWithSlash = (str) => str.charAt(str.length - 1) === '/';
+  const startWithSlash = (str) => str.substring(0, 1) === '/';
+
+  if (isServer(url)) return url;
+
+  return endWithSlash(testEnv) && startWithSlash(url)
+    ? testEnv + url.slice(1, url.length)
+    : testEnv + url;
+}
+
+export const TYPE_DIR_FAVORITE = 0;
+export const TYPE_DIR_VIDEO = 0;
+export const TYPE_DIR_PICTURE = 0;

@@ -1,8 +1,9 @@
 <template>
   <div class="resource-list-container">
-    <n-page-header title="Game" @back="handleBack"></n-page-header>
+    <!-- 头部导航 -->
+    <n-page-header :title="title" @back="goBack"></n-page-header>
 
-    <div class="category">
+    <!-- <div class="category">
       <n-tag
         v-for="item in checkList"
         size="small"
@@ -12,9 +13,10 @@
       >
         Game1
       </n-tag>
-    </div>
+    </div> -->
 
-    <div class="tabs">
+    <!-- 目录标签页 -->
+    <div class="tabs-wrap">
       <n-tabs type="line" default-value="Videos" animated>
         <n-tab-pane
           v-for="item in categoryList"
@@ -90,13 +92,37 @@ import {
   NGi,
   NStatistic,
 } from 'naive-ui';
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { stringify } from 'qs';
 import { Heart, HeartOutline } from '@vicons/ionicons5';
 import { postLike, deleteLike } from '@/api/like';
+import { getResourceList } from '@/api/resource';
 
 const route = useRoute();
 const router = useRouter();
+
+// 头部导航
+const title = route.query.name;
+
+function goBack() {
+  router.push('/m/resource');
+}
+
+// 目录标签页
+const tabs = ref(null);
+const dataList = ref(null);
+const categoryParams = reactive({
+  // TODO: 500
+  // category_id: route.query.category_id,
+});
+
+async function renderTabs() {
+  const res = await getResourceList(categoryParams);
+}
+
+renderTabs();
+
+// 资源列表
 
 const selectedTag = ref(null);
 const checkList = [
@@ -110,10 +136,6 @@ const checkList = [
 selectedTag.value = checkList[0];
 
 const activeStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
-
-function handleBack() {
-  router.push('/m/resource');
-}
 
 const categoryList = [
   {
@@ -252,22 +274,17 @@ async function unlike(item) {
   text-align: left;
   display: flex;
   flex-direction: column;
-  .category {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    overflow-x: scroll;
-    & > .n-tag {
-      margin-bottom: 10px;
-      margin-right: 10px;
-    }
-  }
-  .poster {
-    margin-right: 6px;
-    margin-bottom: 6px;
-    width: 18%;
-  }
-  .tabs {
+  // .category {
+  //   display: flex;
+  //   flex-wrap: wrap;
+  //   width: 100%;
+  //   overflow-x: scroll;
+  //   & > .n-tag {
+  //     margin-bottom: 10px;
+  //     margin-right: 10px;
+  //   }
+  // }
+  .tabs-wrap {
     flex: 1;
     .video-wrap {
       display: flex;
@@ -293,6 +310,11 @@ async function unlike(item) {
         }
       }
     }
+  }
+  .poster {
+    margin-right: 6px;
+    margin-bottom: 6px;
+    width: 18%;
   }
 }
 </style>

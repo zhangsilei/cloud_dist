@@ -23,7 +23,11 @@
             />
           </n-form-item>
           <n-form-item label="Password">
-            <n-input v-model:value="formData.password" placeholder="Password" />
+            <n-input
+              v-model:value="formData.password"
+              placeholder="Password"
+              type="password"
+            />
           </n-form-item>
           <n-form-item v-if="isSignup" label="Invitation Code">
             <n-input
@@ -63,6 +67,43 @@
         </n-button>
       </div>
     </template>
+    <template v-if="isSignup">
+      <div class="footer signup">
+        <div>
+          By clicking "Sign Up", you agree to ****‘s Terms of Service and
+          Privacy Policy.
+        </div>
+        <div>
+          Already have an account?
+          <span class="pointer underline" @click="navigateToSignIp">
+            Sign in
+          </span>
+        </div>
+      </div>
+    </template>
+    <template v-else>
+      <div class="footer signin">
+        <div class="pointer underline" @click="isShowForgot = true">
+          Forget Password?
+        </div>
+        <div class="pointer" @click="navigateToSignUp">Sign up</div>
+      </div>
+    </template>
+
+    <popup-window v-model="isShowForgot" :width="300" :is-show-footer="false">
+      <div>如果你的密码忘记了，请联系客服。 客服tg号：{{ contactPhone }}</div>
+      <n-button
+        style="margin-left: 75px; margin-top: 15px"
+        color="#e03248"
+        attr-type="button"
+        :id="copyContactBtn"
+        :data-clipboard-text="contactPhone"
+        :is-show-footer="false"
+        @click="copyContact"
+      >
+        复制联系方式
+      </n-button>
+    </popup-window>
   </div>
 </template>
 
@@ -74,12 +115,23 @@ import { createCaptcha } from '@/api/captcha';
 import { register, login } from '@/api/user';
 import { setRole, setToken, setUser, setUserId } from '@/common/cookie';
 import { isUser } from '@/common/global';
+import Clipboard from 'clipboard';
+import PopupWindow from '@/components/pc/PopupWindow';
 
 export const TYPE_SIGN_IN = 0;
 export const TYPE_SIGN_UP = 1;
 
 export default defineComponent({
-  components: { NAvatar, NForm, NFormItem, NInput, NButton, NIcon, IosRefresh },
+  components: {
+    NAvatar,
+    NForm,
+    NFormItem,
+    NInput,
+    NButton,
+    NIcon,
+    IosRefresh,
+    PopupWindow,
+  },
   name: 'SignBase',
   props: {
     type: {
@@ -111,7 +163,11 @@ export default defineComponent({
       pic: '',
       countdown: 3,
       isShowSucc: false,
+      isShowForgot: false,
       loading: false,
+      contactPhone: 'xxxx',
+      copyContactBtn: 'copyContactBtn',
+      clipboard: null,
     };
   },
   computed: {
@@ -134,6 +190,9 @@ export default defineComponent({
   },
   async created() {
     this.renderCode();
+  },
+  mounted() {
+    this.initClipboard();
   },
   methods: {
     async onClick() {
@@ -188,6 +247,27 @@ export default defineComponent({
       this.formData.user_name = user_name;
       this.formData.password = password;
     },
+    navigateToSignUp() {
+      this.$router.push('/signup');
+    },
+    navigateToSignIp() {
+      this.$router.push('/signin');
+    },
+    copyContact() {
+      this.clipboard.on('success', (e) => {
+        console.log('copy succ');
+        e.clearSelection();
+        this.initClipboard();
+      });
+      this.clipboard.on('error', (e) => {
+        console.log('copy fail');
+      });
+    },
+    initClipboard() {
+      this.clipboard && this.clipboard.destroy();
+      this.clipboard = null;
+      this.clipboard = new Clipboard(`#${this.copyContactBtn}`);
+    },
   },
 });
 </script>
@@ -212,6 +292,23 @@ export default defineComponent({
     img {
       width: 50px;
     }
+  }
+  .footer {
+    display: flex;
+    color: rgb(127, 127, 127);
+    .pointer {
+      cursor: pointer;
+    }
+    .underline {
+      text-decoration: underline;
+    }
+  }
+  .signin {
+    justify-content: space-between;
+  }
+  .signup {
+    flex-direction: column;
+    align-items: center;
   }
 }
 @media screen and (max-width: 400px) {

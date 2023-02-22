@@ -82,6 +82,24 @@ export const mRoutes = [
     authority: ROLE_USER,
     component: () => import('../views/m/ResourceDetail.vue'),
   },
+  {
+    path: '/m/profile',
+    name: 'mProfile',
+    authority: ROLE_USER,
+    component: () => import('../views/m/Profile.vue'),
+  },
+  {
+    path: '/m/modifypwd',
+    name: 'mModifypwd',
+    authority: ROLE_USER,
+    component: () => import('../views/m/Modifypwd.vue'),
+  },
+  {
+    path: '/m/activation',
+    name: 'mActivation',
+    authority: ROLE_USER,
+    component: () => import('../views/m/Activation.vue'),
+  },
 ];
 
 const router = createRouter({
