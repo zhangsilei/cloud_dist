@@ -3,7 +3,6 @@
     <n-layout has-sider style="width: 100%; height: 100%">
       <!-- show-trigger -->
       <n-layout-sider
-        bordered
         collapse-mode="width"
         @collapse="collapsed = true"
         @expand="collapsed = false"
@@ -20,7 +19,7 @@
       </n-layout-sider>
       <n-layout>
         <n-layout-header>
-          <n-page-header>
+          <n-page-header style="height: 61px">
             <template #extra>
               <n-dropdown
                 placement="bottom-start"
@@ -183,13 +182,7 @@ export default {
         //   key: TYPE_LOGOUT,
         // },
       ];
-      const userOpts = [
-        {
-          label: '我的激活码',
-          key: TYPE_CDKEY,
-        },
-      ];
-      return isUser() ? commonOpts.concat(userOpts) : commonOpts;
+      return commonOpts;
     })();
 
     const logoUrl = ref(null);

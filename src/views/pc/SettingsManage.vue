@@ -107,7 +107,6 @@ async function render() {
       // settingsData.logo.id = logoSetting.id;
       settingsData.logo.value = logoSetting.value;
       logoUrl.value = parseUrlToPath(logoSetting.value);
-      // settingsData.logo.value = 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg';
     }
   }
 }
@@ -128,8 +127,6 @@ function onUpload({ file }) {
   postPicture(file).then(({ url }) => {
     settingsData.logo.value = url;
     logoUrl.value = parseUrlToPath(url);
-    // settingsData.logo.value =
-    //   'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg';
     uplodFile.value.percentage = 100;
     setTimeout(() => {
       uplodFile.value.status = 'finished';

@@ -272,7 +272,7 @@ function renderOptions({ option }) {
       placement: 'bottom-start',
       options: [
         {
-          label: '新建分区',
+          label: '新建同级分区',
           key: CREATE_CATEGORIE,
         },
         {

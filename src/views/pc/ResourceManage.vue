@@ -15,11 +15,19 @@
         </n-form-item>
       </n-space>
 
-      <n-space class="action">
-        <n-button type="primary" @click="onClickUpload(TYPE_VIDEO)">
+      <n-space v-if="isShowResource" class="action">
+        <n-button
+          v-if="dirType === VIDEOS_DIR_KEY"
+          type="primary"
+          @click="onClickUpload(TYPE_VIDEO)"
+        >
           上传视频
         </n-button>
-        <n-button type="primary" @click="onClickUpload(TYPE_IMAGE)">
+        <n-button
+          v-if="dirType === PHOTOS_DIR_KEY"
+          type="primary"
+          @click="onClickUpload(TYPE_IMAGE)"
+        >
           上传图片
         </n-button>
       </n-space>
@@ -97,6 +105,25 @@
             </n-upload-dragger>
           </n-upload>
         </n-form-item>
+        <n-form-item
+          v-if="dirType === PHOTOS_DIR_KEY"
+          label="图片"
+          path="picture_url"
+        >
+          <n-upload directory-dnd @change="onUpload">
+            <n-upload-dragger>
+              <div style="margin-bottom: 12px">
+                <n-icon size="48" :depth="3">
+                  <add />
+                </n-icon>
+              </div>
+              <n-text style="font-size: 16px"> 上传图片 </n-text>
+              <n-p depth="3" style="margin: 8px 0 0 0">
+                (图片大小不超过1M）
+              </n-p>
+            </n-upload-dragger>
+          </n-upload>
+        </n-form-item>
         <n-form-item label="描述" path="description">
           <n-input v-model:value="resource.formData.description" />
         </n-form-item>
@@ -120,7 +147,7 @@
             <div>{{ detail.name }}</div>
           </n-form-item>
           <n-form-item label-placement="left" label="位置">
-            <span v-for="(item, index) in detail.breadcrumbCategory">
+            <span v-for="(item, index) in breadcrumbCategory">
               {{ item }}
               <span v-if="index !== breadcrumbCategory.length - 1">/</span>
             </span>
@@ -238,15 +265,20 @@ import {
   useDialog,
 } from 'naive-ui';
 import { ref, reactive, onMounted, watch } from 'vue';
-import { CameraOutline } from '@vicons/ionicons5';
+import { CameraOutline, Add } from '@vicons/ionicons5';
 import { Photo } from '@vicons/tabler';
 import DirCard from '@/components/pc/DirCard';
 import VideoCard from '@/components/pc/VideoCard';
 import PopupWindow from '@/components/pc/PopupWindow';
 import CategorieTree from '@/components/pc/CategorieTree';
 import { getCategorieList } from '@/api/categories';
-import { postVideo } from '@/api/file';
-import { onlyAllowNumber } from '@/common/global';
+import { postVideo, postPicture } from '@/api/file';
+import {
+  onlyAllowNumber,
+  RESOURCE_TYPE_VIDEO,
+  RESOURCE_TYPE_PICTURE,
+  parseUrlToPath,
+} from '@/common/global';
 import {
   getResourceList,
   createResource,
@@ -262,6 +294,8 @@ const { message, dialog } = createDiscreteApi(['message', 'dialog']);
 
 const TYPE_VIDEO = 1;
 const TYPE_IMAGE = 2;
+const VIDEOS_DIR_KEY = 'Videos';
+const PHOTOS_DIR_KEY = 'Photos';
 
 const resourceRef = ref(null);
 const resource = reactive({
@@ -271,7 +305,7 @@ const resource = reactive({
   type: null,
   formData: ref({
     category_id: null,
-    resourceType: null,
+    resource_type: null,
     name: null,
     description: null,
     picture_url: null,
@@ -307,14 +341,25 @@ function onUpload({ file }) {
     }
     uplodFile.value.percentage += Math.random() * 30;
   }, 1000);
-  postVideo(file).then(({ picture_url, video_url }) => {
-    resource.formData.picture_url = picture_url;
-    resource.formData.video_url = video_url;
-    uplodFile.value.percentage = 100;
-    setTimeout(() => {
-      uplodFile.value.status = 'finished';
-    }, 0);
-  });
+  if (dirType.value === VIDEOS_DIR_KEY) {
+    postVideo(file).then(({ picture_url, video_url }) => {
+      resource.formData.picture_url = picture_url;
+      resource.formData.video_url = video_url;
+      uplodFile.value.percentage = 100;
+      setTimeout(() => {
+        uplodFile.value.status = 'finished';
+      }, 0);
+    });
+  } else if (dirType.value === PHOTOS_DIR_KEY) {
+    postPicture(file).then(({ url }) => {
+      resource.formData.picture_url = url;
+      resource.formData.video_url = '';
+      uplodFile.value.percentage = 100;
+      setTimeout(() => {
+        uplodFile.value.status = 'finished';
+      }, 0);
+    });
+  }
 }
 
 const isLocal = location.hostname === 'localhost';
@@ -342,17 +387,19 @@ function onResourceConfirm() {
 function onClickUpload(type) {
   resource.type = type;
   resource.isShow = true;
-  resource.formData.resourceType = type;
+  resource.formData.resource_type = type;
   resource.isEdit = false;
 }
-
+const SORT_TYPE_DEFAULT = '';
+const SORT_TYPE_POPULAR = 'like_num';
 const pageCount = ref(null);
 const query = reactive({
   page_num: 1,
   page_size: 10,
   category_id: null,
   key: null,
-  // order_by: '',
+  order_by: SORT_TYPE_DEFAULT,
+  resource_type: null,
   // order_type: '',
 });
 
@@ -362,8 +409,13 @@ function queryList() {
 
 function reset() {}
 
-async function renderResources() {
-  query.category_id = selectedCategory.value;
+async function renderResources(type) {
+  query.category_id = selectedCategory.value.id;
+  if (type === 'Videos') {
+    query.resource_type = 1;
+  } else if (type === 'Photos') {
+    query.resource_type = 2;
+  }
   const res = await getResourceList(query);
   dataList.value = res.resources || [];
   pageCount.value =
@@ -392,15 +444,27 @@ function getBreadcrumbCategory(arr, id, result = []) {
   return result;
 }
 
+const dirType = ref(null);
+
 watch(store.state, (val) => {
-  selectedCategory.value = val.selectedCategory;
-  breadcrumbCategory.value = getBreadcrumbCategory(
-    val.allCategories,
-    val.selectedCategory
-  );
-  resource.formData.category_id = val.selectedCategory;
-  query.category_id = val.selectedCategory;
-  renderResources();
+  let id = val.selectedCategory.dirType
+    ? val.selectedCategory.category_id
+    : val.selectedCategory.id;
+  selectedCategory.value = id;
+  breadcrumbCategory.value = getBreadcrumbCategory(val.allCategories, id);
+  resource.formData.category_id = id;
+  query.category_id = id;
+  isShowResource.value = val.selectedCategory.dirType;
+  dirType.value = val.selectedCategory.dirType;
+  if (val.selectedCategory.dirType) {
+    if (val.selectedCategory.dirType === VIDEOS_DIR_KEY) {
+      renderResources('Videos');
+    } else if (val.selectedCategory.dirType === PHOTOS_DIR_KEY) {
+      renderResources('Photos');
+    }
+  } else {
+    dataList.value = [];
+  }
 });
 
 watch(
@@ -430,17 +494,14 @@ function editRes(item) {
   resource.formData.name = item.name;
   resource.formData.picture_url = item.picture_url;
   resource.formData.video_url = item.video_url;
-  resource.formData.resourceType = item.resource_type;
+  resource.formData.resource_type = item.resource_type;
   resource.type = item.resource_type;
   resource.isShow = true;
   resource.isEdit = true;
 }
 async function detailResource(item) {
   const res = await getResourceDetail(item.id);
-  detail.picture_url =
-    location.hostname === 'localhost'
-      ? 'http://116.63.139.2' + res.picture_url
-      : res.picture_url;
+  detail.picture_url = parseUrlToPath(res.picture_url);
   detail.name = res.name;
   detail.breadcrumbCategory = getBreadcrumbCategory(
     store.state.allCategories,
@@ -467,6 +528,8 @@ function deleteRes(item) {
     onNegativeClick: () => {},
   });
 }
+
+const isShowResource = ref(false);
 </script>
 
 <style lang="scss" scoped>

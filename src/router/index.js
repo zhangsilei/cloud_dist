@@ -30,6 +30,12 @@ export const pcRoutes = [
         component: () => import('../views/pc/Resource.vue'),
       },
       {
+        path: '/resource/detail',
+        name: 'resourceDetail',
+        authority: ROLE_USER,
+        component: () => import('../views/pc/ResourceDetail.vue'),
+      },
+      {
         path: '/resource/manage',
         name: 'resourceManage',
         authority: ROLE_ADMIN,

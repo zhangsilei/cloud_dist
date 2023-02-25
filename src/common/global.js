@@ -74,3 +74,6 @@ export function parseUrlToPath(url) {
 export const TYPE_DIR_FAVORITE = 0;
 export const TYPE_DIR_VIDEO = 0;
 export const TYPE_DIR_PICTURE = 0;
+
+export const RESOURCE_TYPE_VIDEO = 'VIDEO';
+export const RESOURCE_TYPE_PICTURE = 'PICTURE';

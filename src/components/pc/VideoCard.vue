@@ -85,6 +85,7 @@ import { VideoClip20Filled } from '@vicons/fluent';
 import { MessageFilled } from '@vicons/antd';
 import PopupWindow from '@/components/pc/PopupWindow';
 import Clipboard from 'clipboard';
+import { isAdmin } from '@/common/global';
 
 export default {
   name: 'VideoCard',
@@ -188,6 +189,27 @@ export default {
       }
     }
 
+    const adminOptions = [
+      {
+        label: '编辑',
+        key: TYPE_EDIT,
+      },
+      {
+        label: '详细信息',
+        key: TYPE_DETAIL,
+      },
+      {
+        label: '删除',
+        key: TYPE_DELETE,
+      },
+    ];
+    const userOptions = [
+      {
+        label: '详细信息',
+        key: TYPE_DETAIL,
+      },
+    ];
+
     return {
       IosHeart,
       VideoClip20Filled,
@@ -208,20 +230,7 @@ export default {
       copyContactBtn,
       setCdkey,
       copyContact,
-      options: [
-        {
-          label: '编辑',
-          key: TYPE_EDIT,
-        },
-        {
-          label: '详细信息',
-          key: TYPE_DETAIL,
-        },
-        {
-          label: '删除',
-          key: TYPE_DELETE,
-        },
-      ],
+      options: isAdmin() ? adminOptions : userOptions,
       handleSelect,
     };
   },
