@@ -49,6 +49,11 @@
           ></video-card>
         </n-grid-item>
       </n-grid>
+      <n-pagination
+        style="justify-content: flex-end"
+        v-model:page="query.page_num"
+        :page-count="pageCount"
+      />
     </div>
   </div>
 </template>
@@ -65,45 +70,45 @@ import {
   NGridItem,
 } from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
-import { reactive, computed, watch } from 'vue';
+import { reactive, computed, watch, ref } from 'vue';
 import DirCard from '@/components/pc/DirCard';
 import VideoCard from '@/components/pc/VideoCard';
 import { useStore } from 'vuex';
+import {
+  getResourceList,
+  createResource,
+  getResourceDetail,
+  deleteResource,
+  updateResource,
+} from '@/api/resource';
 
 const store = useStore();
 
-const SORT_TYPE_DEFAULT = 0;
-const SORT_TYPE_POPULAR = 1;
-const state = reactive({
-  sortType: SORT_TYPE_DEFAULT,
-  fileNames: ['Favorite', 'Videos', 'Photos'],
-  breadcrumbs: [],
-  dataList: [
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: false },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-    { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-  ],
+const SORT_TYPE_DEFAULT = 'like_num';
+const SORT_TYPE_POPULAR = 'like_num';
+const pageCount = ref(null);
+const query = reactive({
+  page_num: 1,
+  page_size: 10,
+  category_id: null,
+  key: null,
+  order_by: null,
+  // order_type: '',
 });
-const isDefault = computed(() => state.sortType === SORT_TYPE_DEFAULT);
-const isPorpular = computed(() => state.sortType === SORT_TYPE_POPULAR);
+const state = reactive({
+  fileNames: ['Videos', 'Photos'],
+  breadcrumbs: [],
+  dataList: null,
+});
+const isDefault = computed(() => state.order_by === SORT_TYPE_DEFAULT);
+const isPorpular = computed(() => state.order_by === SORT_TYPE_POPULAR);
 
 const activeStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
 const selectedCategory = ref(null);
 const breadcrumbCategory = ref([]);
 
 function sort(type) {
-  state.sortType = type;
+  state.order_by = type;
 }
 
 function filterTableMater(id, arr) {
@@ -124,13 +129,26 @@ function getBreadcrumbCategory(arr, id, result = []) {
   return result;
 }
 
+async function renderResources() {
+  query.category_id = selectedCategory.value;
+  const res = await getResourceList(query);
+  state.dataList = res.resources || [];
+  pageCount.value =
+    res.total % query.page_size
+      ? res.total / query.page_size
+      : res.total / query.page_size + 1;
+  // loading.value = false;
+}
+
 watch(store.state, (val) => {
-  selectedCategory.value = val.selectedCategory;
-  breadcrumbCategory.value = getBreadcrumbCategory(
-    val.allCategories,
-    val.selectedCategory
-  );
-  renderResources();
+  let id = val.selectedCategory.dirType
+    ? val.selectedCategory.category_id
+    : val.selectedCategory.id;
+  selectedCategory.value = id;
+  breadcrumbCategory.value = getBreadcrumbCategory(val.allCategories, id);
+  if (val.selectedCategory.dirType) {
+    renderResources();
+  }
 });
 </script>
 

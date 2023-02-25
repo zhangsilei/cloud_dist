@@ -21,7 +21,7 @@ export function postPicture(file) {
   formData.append('picture', file.file);
 
   return request({
-    url: `/videos`,
+    url: `/pictures`,
     method: 'post',
     headers: {
       'Content-type': 'multipart/form-data',

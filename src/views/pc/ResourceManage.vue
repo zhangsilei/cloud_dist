@@ -5,7 +5,7 @@
     <div class="resource-wrap">
       <n-space class="filter">
         <n-form-item label-placement="left" label="关键字">
-          <n-input v-model:value="filter.query"></n-input>
+          <n-input v-model:value="query.key" clearable></n-input>
         </n-form-item>
         <n-form-item label-placement="left">
           <n-button type="primary" @click="queryList"> 查询 </n-button>
@@ -260,10 +260,9 @@ import moment from 'moment';
 const store = useStore();
 const { message, dialog } = createDiscreteApi(['message', 'dialog']);
 
-const TYPE_VIDEO = 0;
-const TYPE_IMAGE = 1;
+const TYPE_VIDEO = 1;
+const TYPE_IMAGE = 2;
 
-const filter = reactive({ query: '' });
 const resourceRef = ref(null);
 const resource = reactive({
   isShow: false,
@@ -352,6 +351,7 @@ const query = reactive({
   page_num: 1,
   page_size: 10,
   category_id: null,
+  key: null,
   // order_by: '',
   // order_type: '',
 });
@@ -399,7 +399,7 @@ watch(store.state, (val) => {
     val.selectedCategory
   );
   resource.formData.category_id = val.selectedCategory;
-  // query.category_id = val.selectedCategory;
+  query.category_id = val.selectedCategory;
   renderResources();
 });
 
@@ -467,27 +467,6 @@ function deleteRes(item) {
     onNegativeClick: () => {},
   });
 }
-// let isShowUpload = ref(false);
-// const state = reactive({
-//   dataList: [
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: false },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//     { likeNum: 10, fileName: 'xxxx.mp4', authority: true },
-//   ],
-// });
-
-// function query() {}
 </script>
 
 <style lang="scss" scoped>
@@ -526,18 +505,5 @@ function deleteRes(item) {
     display: flex;
     flex-direction: column;
   }
-}
-</style>
-
-<style lang="scss">
-.n-breadcrumb {
-  padding: 0;
-  margin-right: 50px;
-}
-.n-input {
-  max-width: 300px;
-}
-.n-tag {
-  cursor: pointer;
 }
 </style>

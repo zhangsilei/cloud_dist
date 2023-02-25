@@ -3,7 +3,7 @@
     <div class="card">
       <img
         class="dir"
-        src="https://img2.baidu.com/it/u=1882482103,2575197468&fm=253&fmt=auto&app=138&f=JPEG?w=750&h=500"
+        src="../../assets/dir.png"
       />
       <div>{{ fileName }}</div>
     </div>

@@ -40,6 +40,7 @@
               style="width: 50%"
               v-model:value="formData.captcha_code"
               placeholder="Verification code"
+              @keyup.enter="onClick"
             />
             <img :src="pic" class="verify-img" />
             <ios-refresh class="refresh-btn" @click="renderCode" />

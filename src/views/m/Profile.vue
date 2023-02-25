@@ -7,9 +7,6 @@
         :size="50"
         src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
       />
-      <!-- <img
-        src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-      /> -->
       <div class="user">{{ user }}</div>
     </div>
     <!-- 操作栏 -->

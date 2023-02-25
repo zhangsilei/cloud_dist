@@ -8,10 +8,12 @@
         @collapse="collapsed = true"
         @expand="collapsed = false"
       >
-        <img
-          class="logo"
-          src="https://img2.baidu.com/it/u=1882482103,2575197468&fm=253&fmt=auto&app=138&f=JPEG?w=750&h=500"
-        />
+        <div
+          style="display: flex; align-items: center; justify-content: center"
+        >
+          <img class="logo" :src="logoUrl" />
+          <div style="margin-left: 10px">{{ webName }}</div>
+        </div>
         <n-divider style="margin: 10px 0 0" />
         <menu-bar v-if="isAdmin" />
         <categorie-tree v-if="isUser" />
@@ -94,10 +96,11 @@ import { ref, reactive } from 'vue';
 import MenuBar from '@/components/pc/MenuBar';
 import CategorieTree from '@/components/pc/CategorieTree';
 import PopupWindow from '@/components/pc/PopupWindow';
-import { isUser, isAdmin, logout } from '@/common/global';
+import { isUser, isAdmin, logout, parseUrlToPath } from '@/common/global';
 import { getUser, getUserId } from '@/common/cookie';
 import { updateUser } from '@/api/user';
 import router from '@/router';
+import { getSettingConfigs, updateSettingConfigs } from '@/api/setting';
 
 const { message } = createDiscreteApi(['message']);
 
@@ -189,6 +192,22 @@ export default {
       return isUser() ? commonOpts.concat(userOpts) : commonOpts;
     })();
 
+    const logoUrl = ref(null);
+    const webName = ref(null);
+    const KEY_NAME = 'name';
+    const KEY_LOGO = 'logo';
+
+    async function render() {
+      const res = await getSettingConfigs();
+      const dataList = res.system_configs || [];
+      webName.value = dataList.find((item) => item.key === KEY_NAME).value;
+      logoUrl.value = parseUrlToPath(
+        dataList.find((item) => item.key === KEY_LOGO).value
+      );
+    }
+
+    render();
+
     return {
       options,
       isShowPwdAlert,
@@ -212,6 +231,8 @@ export default {
       onSelect,
       updatePwd,
       user: getUser(),
+      logoUrl,
+      webName,
     };
   },
 };

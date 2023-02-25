@@ -17,6 +17,7 @@
           :default-expanded-keys="defaultExpandedKeys"
           :expand-on-click="true"
           @update:selected-keys="onSelectHandle"
+          @update:expanded-keys="onExpandedHandle"
           children-field="items"
           key-field="id"
           label-field="name"
@@ -96,6 +97,10 @@ const CREATE_CATEGORIE = 0;
 const CREATE_CHILD_CATEGORIE = 1;
 const EDIT_CATEGORIE = 2;
 const DELETE_CATEGORIE = 3;
+const FAVORITE_DIR_KEY = 'Favorite';
+const MY_FAVORITE_DIR_KEY = 'MyFavorite';
+const VIDEOS_DIR_KEY = 'Videos';
+const PHOTOS_DIR_KEY = 'Photos';
 
 let loading = ref(true);
 let selectedRow = ref(null);
@@ -109,11 +114,32 @@ renderTree();
 async function renderTree() {
   const res = await getCategorieList();
   loading.value = false;
+  // 在一级分区下插入Favorite My favorite目录
+  if (isUser()) {
+    (res.items || []).forEach((item, index) => {
+      if (item.items) {
+        res.items[index].items.unshift({
+          id: FAVORITE_DIR_KEY + item.id,
+          name: 'My favorite',
+          category_id: item.id,
+          dirType: FAVORITE_DIR_KEY,
+          items: null,
+        });
+        res.items[index].items.unshift({
+          id: MY_FAVORITE_DIR_KEY + item.id,
+          name: 'Favorite',
+          category_id: item.id,
+          dirType: MY_FAVORITE_DIR_KEY,
+          items: null,
+        });
+      }
+    });
+  }
   dataList.value = res.items || [];
   if (dataList.value.length) {
     defaultSelectedKeys.push(dataList.value[0].id);
     defaultExpandedKeys.push(dataList.value[0].id);
-    store.commit('SET_SELECTED_CATEGORY', dataList.value[0].id);
+    store.commit('SET_SELECTED_CATEGORY', dataList.value[0]);
     store.commit('SET_ALL_CATEGORIES', dataList.value);
   }
 }
@@ -184,7 +210,7 @@ function editCat() {
     await updateCategorie(selectedRow.id, {
       ...categorie.formData,
       seq: parseInt(categorie.formData.seq),
-      parent_category_id: selectedRow.id,
+      parent_category_id: selectedRow.parent_category_id == 0 ? 0 : selectedRow.id,
     });
     renderTree();
     categorie.isShow = false;
@@ -285,7 +311,27 @@ function renderOptions({ option }) {
 }
 
 function onSelectHandle(keys, option, meta) {
-  store.commit('SET_SELECTED_CATEGORY', keys[0]);
+  store.commit('SET_SELECTED_CATEGORY', meta.node);
+}
+
+function onExpandedHandle(keys, option, meta) {
+  const hasDir = meta.node.items.some((item) => item.dirType);
+  if (!hasDir && meta.node.parent_category_id) {
+    meta.node.items.unshift({
+      id: PHOTOS_DIR_KEY + meta.node.id,
+      name: 'Photos',
+      category_id: meta.node.id,
+      dirType: PHOTOS_DIR_KEY,
+      items: null,
+    });
+    meta.node.items.unshift({
+      id: VIDEOS_DIR_KEY + meta.node.id,
+      name: 'Video',
+      category_id: meta.node.id,
+      dirType: VIDEOS_DIR_KEY,
+      items: null,
+    });
+  }
 }
 </script>
 
