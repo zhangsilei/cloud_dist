@@ -45,11 +45,7 @@
               :file-name="item.name"
               :like-num="item.like_num"
               :authority="true"
-              :poster="
-                isLocal
-                  ? 'http://116.63.139.2' + item.picture_url
-                  : item.picture_url
-              "
+              :poster="parseUrlToPath(item.picture_url)"
               @on-edit="editRes(item)"
               @on-detail="detailResource(item)"
               @on-delete="deleteRes(item)"

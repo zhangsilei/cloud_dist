@@ -6,7 +6,7 @@
       style="text-align: left"
     /> -->
     <n-spin :show="loading">
-      <n-space v-if="dataList" vertical :size="12">
+      <n-space v-if="dataList && dataList.length" vertical :size="12">
         <n-input v-if="isAdmin()" v-model:value="pattern" placeholder="搜索" />
         <n-tree
           :show-irrelevant-nodes="false"
@@ -105,7 +105,7 @@ const PHOTOS_DIR_KEY = 'Photos';
 let loading = ref(true);
 let selectedRow = ref(null);
 let dataList = ref(null);
-let optionType = ref('');
+let optionType = ref(CREATE_CATEGORIE);
 let defaultSelectedKeys = reactive([]);
 let defaultExpandedKeys = reactive([]);
 
@@ -197,7 +197,7 @@ function addCat() {
     await createCategorie({
       ...categorie.formData,
       seq: parseInt(categorie.formData.seq),
-      parent_category_id: pidMap[optionType],
+      parent_category_id: pidMap[optionType.value],
     });
     renderTree();
     categorie.isShow = false;
@@ -222,6 +222,7 @@ async function delCat() {
   await deleteCategorie(selectedRow.id);
   renderTree();
   message.success('操作成功！');
+  optionType.value = CREATE_CATEGORIE;
 }
 
 function onCategorieConfirm() {
@@ -230,7 +231,7 @@ function onCategorieConfirm() {
     [CREATE_CHILD_CATEGORIE]: addCat,
     [EDIT_CATEGORIE]: editCat,
   };
-  return optionMap[optionType]();
+  return optionMap[optionType.value]();
 }
 
 watch(
@@ -289,7 +290,7 @@ function renderOptions({ option }) {
         },
       ],
       onSelect: (key, { label }) => {
-        optionType = key;
+        optionType.value = key;
         selectedRow = option;
         if (key === DELETE_CATEGORIE) {
           delCat();

@@ -110,11 +110,12 @@ import {
   NDataTable,
   NPagination,
 } from 'naive-ui';
-import { ref, h, reactive, watch } from 'vue';
+import { ref, h, reactive, watch, onMounted } from 'vue';
 import PopupWindow from '@/components/pc/PopupWindow';
 import { getCategorieList } from '@/api/categories';
 import { createActivationCode, getActivationCodeList } from '@/api/activation';
 import moment from 'moment';
+import Clipboard from 'clipboard';
 
 const { message } = createDiscreteApi(['message']);
 
@@ -172,6 +173,20 @@ const columns = [
   {
     title: '激活码',
     key: 'activation_code.code',
+    render(row) {
+      return h(
+        NButton,
+        {
+          'data-clipboard-text': row.activation_code.code,
+          id: row.activation_code.code,
+          onClick() {
+            copyContact(row.activation_code.code);
+            message.success('复制成功！');
+          },
+        },
+        row.activation_code.code
+      );
+    },
   },
   {
     title: '激活分区',
@@ -240,10 +255,31 @@ const columns = [
   },
 ];
 
+let clipboard = null;
 let loading = ref(true);
 let categoryListWithOneLevel = ref(null);
 
 getCategoryListWithOneLevel();
+
+const copyContact = (id) => {
+  if (!clipboard) {
+    initClipboard(id);
+  }
+  clipboard.on('success', (e) => {
+    console.log('copy succ');
+    e.clearSelection();
+    initClipboard(id);
+  });
+  clipboard.on('error', (e) => {
+    console.log('copy fail');
+  });
+};
+
+const initClipboard = (id) => {
+  clipboard && clipboard.destroy();
+  clipboard = null;
+  clipboard = new Clipboard(`#${id}`);
+};
 
 async function getCategoryListWithOneLevel() {
   const res = await getCategorieList();
