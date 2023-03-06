@@ -7,12 +7,7 @@
           <n-icon :component="IosSearch" />
         </template>
       </n-input>
-      <n-avatar
-        class="user"
-        round
-        src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-        @click="navigateToUser"
-      />
+      <n-avatar class="user" round :src="userHeader" @click="navigateToUser" />
     </div>
     <!-- 分类标签 -->
     <div class="tags-wrap">
@@ -20,6 +15,7 @@
         v-for="item in tags"
         size="small"
         round
+        strong
         :color="selectedTag.id === item.id ? activeTagStyle : undefined"
         @click="changeTag(item)"
       >
@@ -27,26 +23,53 @@
       </n-tag>
     </div>
     <!-- 子分类列表 -->
-    <div class="list-wrap">
+    <n-spin class="list-wrap" :show="loading">
       <n-grid x-gap="12" y-gap="12" :cols="4">
         <n-gi v-for="item in dataList" @click="navigateToList(item)">
           <img class="poster" :src="parseUrlToPath(item.picture_url)" />
-          <div>{{ item.name }}</div>
+          <div>
+            <n-ellipsis style="max-width: 75px">
+              {{ item.name }}
+            </n-ellipsis>
+          </div>
         </n-gi>
       </n-grid>
-    </div>
+    </n-spin>
   </div>
 </template>
 
 <script setup>
-import { NTag, NInput, NAvatar, NIcon, NImage, NGrid, NGi } from 'naive-ui';
+import {
+  NTag,
+  NInput,
+  NAvatar,
+  NIcon,
+  NImage,
+  NGrid,
+  NGi,
+  NSpin,
+  NEllipsis,
+} from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
 import { ref, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { getCategorieList } from '@/api/categories';
 import { getResourceList } from '@/api/resource';
-import { parseUrlToPath } from '@/common/global';
+import {
+  DIR_MY_FAVORITE_LABEL,
+  DIR_MY_FAVORITE_KEY,
+  DIR_FAVORITE_KEY,
+  DIR_FAVORITE_LABEL,
+  POPULAR_CATEGORY_KEY,
+  POPULAR_CATEGORY_VALUE,
+  parseUrlToPath,
+} from '@/common/global';
+import userHeader from '@/assets/header_user.png';
+import myFavorite from '@/assets/my_favorite.png';
+import favorite from '@/assets/my_favorite.png';
+import { useStore } from 'vuex';
 
+const store = useStore();
 const router = useRouter();
 
 // 头部搜索
@@ -61,18 +84,26 @@ const activeTagStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
 
 async function renderTags() {
   const res = await getCategorieList();
-  tags.value = res.items || [];
-  selectedTag.value = res.items[0] || {};
+  const dataList = res.items || [];
+  // 默认popular为第一个一级分区
+  dataList.unshift({
+    id: POPULAR_CATEGORY_KEY,
+    name: POPULAR_CATEGORY_VALUE,
+  });
+  tags.value = dataList;
+  selectedTag.value = dataList[0] || {};
 }
 
 function changeTag(item) {
   selectedTag.value = item;
+  store.commit('SET_SELECTED_CATEGORY', item);
 }
 
 renderTags();
 
 // 子分类列表
-const dataList = ref(null);
+const loading = ref(false);
+const dataList = ref([]);
 const dataListParams = reactive({
   page_num: 1,
   page_size: 10,
@@ -80,12 +111,39 @@ const dataListParams = reactive({
 });
 
 async function renderList() {
-  const res = await getResourceList(dataListParams);
-  dataList.value = res.resources || [];
+  loading.value = true;
+  dataList.value = [];
+  if (selectedTag.value.id !== POPULAR_CATEGORY_KEY) {
+    // const res = await getResourceList(dataListParams);
+    // dataList.value = res.resources || [];
+    // TODO: mock picture_url
+    const a = selectedTag.value.items.map((item) => {
+      return {
+        ...item,
+        picture_url:
+          'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg',
+      };
+    });
+    dataList.value = a || [];
+    // dataList.value = selectedTag.value.items || [];
+  } else {
+    dataList.value = [
+      {
+        id: DIR_MY_FAVORITE_KEY,
+        name: DIR_MY_FAVORITE_LABEL,
+        picture_url: myFavorite,
+      },
+      {
+        id: DIR_FAVORITE_KEY,
+        name: DIR_FAVORITE_LABEL,
+        picture_url: favorite,
+      },
+    ];
+  }
+  loading.value = false;
 }
 
 watch(selectedTag, (val) => {
-  // TODO: 加了category_id会报500
   // dataListParams.category_id = val.id;
   renderList();
 });
@@ -122,7 +180,7 @@ function navigateToList(item) {
     margin-top: 15px;
     margin-bottom: 15px;
     display: flex;
-    flex-wrap: wrap;
+    // flex-wrap: wrap;
     width: 100%;
     overflow-x: scroll;
     & > .n-tag {
@@ -131,11 +189,17 @@ function navigateToList(item) {
     }
   }
   .list-wrap {
+    flex: 1;
+    overflow-y: scroll;
     text-align: center;
+    font-size: 13px;
     .poster {
       width: 50px;
       height: 50px;
       border-radius: 50%;
+    }
+    .name {
+      white-space: nowrap;
     }
   }
 }

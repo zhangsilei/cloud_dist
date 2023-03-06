@@ -1,12 +1,10 @@
 <template>
   <div class="profile-container">
+    <!-- 头部导航 -->
+    <page-header title="个人中心" @back="goBack" style="padding: 0 10px" />
     <!-- 用户信息 -->
     <div class="user-wrap">
-      <n-avatar
-        round
-        :size="50"
-        src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-      />
+      <n-avatar round :size="50" :src="headerUser" />
       <div class="user">{{ user }}</div>
     </div>
     <!-- 操作栏 -->
@@ -33,8 +31,15 @@ import { getUser } from '@/common/cookie';
 import { ArrowForwardIosOutlined } from '@vicons/material';
 import { logout } from '@/common/global';
 import { useRouter } from 'vue-router';
+import PageHeader from '@/components/m/PageHeader';
+import headerUser from '@/assets/header_user.png';
 
 const router = useRouter();
+
+// 头部导航
+function goBack() {
+  router.go(-1);
+}
 
 // 用户信息
 const user = getUser();

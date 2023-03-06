@@ -42,6 +42,7 @@
 
     <div style="display: flex; flex-direction: column">
       <n-data-table
+        :max-height="maxHeight"
         :loading="loading"
         :columns="columns"
         :data="dataList"
@@ -117,6 +118,14 @@ import { createActivationCode, getActivationCodeList } from '@/api/activation';
 import moment from 'moment';
 import Clipboard from 'clipboard';
 
+const maxHeight = ref(0);
+
+onMounted(() => {
+  const $ = (selector) => document.querySelector(selector);
+  maxHeight.value =
+    $('.activation-code-manage-container').offsetHeight - 58 - 49 - 38 - 65;
+});
+
 const { message } = createDiscreteApi(['message']);
 
 const TYPE_USED = true;
@@ -169,10 +178,12 @@ const columns = [
   {
     title: '编号',
     key: 'activation_code.id',
+    width: 160,
   },
   {
     title: '激活码',
     key: 'activation_code.code',
+    width: 130,
     render(row) {
       return h(
         NButton,
@@ -191,6 +202,10 @@ const columns = [
   {
     title: '激活分区',
     key: 'category.name',
+    width: 160,
+    ellipsis: {
+      tooltip: true,
+    },
   },
   {
     title: '有效期',
@@ -220,7 +235,8 @@ const columns = [
   },
   {
     title: '创建时间',
-    key: 'created_time',
+    key: 'activation_code.created_time',
+    width: 160,
     render(row) {
       return h(
         'span',
@@ -233,14 +249,14 @@ const columns = [
   },
   {
     title: '用户ID',
-    key: 'user_id',
+    key: 'activation_code.user_id',
     render(row) {
       return h('span', null, row.activation_code.user_id || '--');
     },
   },
   {
     title: '使用时间',
-    key: 'use_time',
+    key: 'activation_code.use_time',
     render(row) {
       return h(
         'span',
@@ -262,13 +278,10 @@ let categoryListWithOneLevel = ref(null);
 getCategoryListWithOneLevel();
 
 const copyContact = (id) => {
-  if (!clipboard) {
-    initClipboard(id);
-  }
+  initClipboard(id);
   clipboard.on('success', (e) => {
     console.log('copy succ');
     e.clearSelection();
-    initClipboard(id);
   });
   clipboard.on('error', (e) => {
     console.log('copy fail');

@@ -19,7 +19,7 @@
         @slideChange="onSlideChange"
       >
         <swiper-slide class="res-item" v-for="item in state.dataList">
-          <template v-if="item.resource_type === RESOURCE_TYPE_VIDEO">
+          <template v-if="item.resource_type === 'VIDEO'">
             <video
               :id="item.name"
               class="res"
@@ -53,7 +53,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 // import required modules
 import { Navigation } from 'swiper';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { getResourceList } from '@/api/resource';
 import {
   RESOURCE_TYPE_VIDEO,
@@ -63,6 +63,7 @@ import {
 import Hls from 'hls.js';
 
 const route = useRoute();
+const router = useRouter();
 
 const state = reactive({
   dataList: [],
@@ -103,7 +104,7 @@ function play() {
 watch(
   () => state.currentRes,
   (val) => {
-    if (val.resource_type === RESOURCE_TYPE_VIDEO) {
+    if (val.resource_type === 'VIDEO') {
       nextTick(() => {
         play();
       });
@@ -120,14 +121,14 @@ const onSlideChange = (swiper) => {
   console.log('slide change');
 };
 
-// function goToResourcePage() {
-//   route.push({
-//     path: '/resource',
-//     query: {
-//       key: route.query.key
-//     }
-//   })
-// }
+function goToResourcePage() {
+  router.push({
+    path: '/resource',
+    // query: {
+    //   key: route.query.key
+    // }
+  });
+}
 </script>
 
 <style lang="scss" scoped>
@@ -168,6 +169,7 @@ $headerHeight: 45px;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 100%;
         .res {
           height: 100%;
         }

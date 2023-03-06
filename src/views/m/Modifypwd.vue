@@ -1,7 +1,11 @@
 <template>
   <div class="modifypwd-container">
     <!-- 头部导航 -->
-    <PageHeader title="Update password" @back="goBack" />
+    <PageHeader
+      title="Update password"
+      @back="goBack"
+      style="padding: 0 10px"
+    />
     <!-- 修改密码表单 -->
     <n-form
       class="form"

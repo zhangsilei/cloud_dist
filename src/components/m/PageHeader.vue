@@ -1,9 +1,13 @@
 <template>
   <n-page-header
-    style="padding: 0 10px; border-bottom: 1px solid #eee"
+    style="border-bottom: 1px solid #eee"
     :title="title"
     @back="back"
-  ></n-page-header>
+  >
+    <template #extra>
+      <slot name="extra"></slot>
+    </template>
+  </n-page-header>
 </template>
 
 <script setup>

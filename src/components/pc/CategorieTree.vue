@@ -85,9 +85,15 @@ import {
   deleteCategorie,
 } from '@/api/categories';
 import PopupWindow from '@/components/pc/PopupWindow';
-import { onlyAllowNumber } from '@/common/global';
 import { EllipsisHorizontalSharp } from '@vicons/ionicons5';
-import { isUser, isAdmin } from '@/common/global';
+import {
+  isUser,
+  isAdmin,
+  onlyAllowNumber,
+  resourceTypeEnum,
+  popularCategoryEnum,
+  favoriteTypeEnum,
+} from '@/common/global';
 import { useStore } from 'vuex';
 
 const store = useStore();
@@ -113,29 +119,48 @@ renderTree();
 
 async function renderTree() {
   const res = await getCategorieList();
+  const items = res.items || [];
   loading.value = false;
-  // 在一级分区下插入Favorite My favorite目录
+  // // 在一级分区下插入Favorite、My favorite目录
+  // if (isUser()) {
+  //   (res.items || []).forEach((item, index) => {
+  //     if (item.items) {
+  //       res.items[index].items.unshift({
+  //         id: FAVORITE_DIR_KEY + item.id,
+  //         name: 'My favorite',
+  //         category_id: item.id,
+  //         dirType: FAVORITE_DIR_KEY,
+  //         items: null,
+  //       });
+  //       res.items[index].items.unshift({
+  //         id: MY_FAVORITE_DIR_KEY + item.id,
+  //         name: 'Favorite',
+  //         category_id: item.id,
+  //         dirType: MY_FAVORITE_DIR_KEY,
+  //         items: null,
+  //       });
+  //     }
+  //   });
+  // }
+
+  // 默认popular为第一个一级分区
   if (isUser()) {
-    (res.items || []).forEach((item, index) => {
-      if (item.items) {
-        res.items[index].items.unshift({
-          id: FAVORITE_DIR_KEY + item.id,
-          name: 'My favorite',
-          category_id: item.id,
-          dirType: FAVORITE_DIR_KEY,
-          items: null,
-        });
-        res.items[index].items.unshift({
-          id: MY_FAVORITE_DIR_KEY + item.id,
-          name: 'Favorite',
-          category_id: item.id,
-          dirType: MY_FAVORITE_DIR_KEY,
-          items: null,
-        });
-      }
+    items.unshift({
+      id: popularCategoryEnum.POPULAR,
+      name: popularCategoryEnum.getDescFromValue(popularCategoryEnum.POPULAR),
+      items: [
+        {
+          id: favoriteTypeEnum.MY_FAVORITE,
+          name: favoriteTypeEnum.getDescFromValue(favoriteTypeEnum.MY_FAVORITE),
+        },
+        {
+          id: favoriteTypeEnum.FAVORITE,
+          name: favoriteTypeEnum.getDescFromValue(favoriteTypeEnum.FAVORITE),
+        },
+      ],
     });
   }
-  dataList.value = res.items || [];
+  dataList.value = items;
   if (dataList.value.length) {
     defaultSelectedKeys.push(dataList.value[0].id);
     defaultExpandedKeys.push(dataList.value[0].id);
@@ -210,7 +235,8 @@ function editCat() {
     await updateCategorie(selectedRow.id, {
       ...categorie.formData,
       seq: parseInt(categorie.formData.seq),
-      parent_category_id: selectedRow.parent_category_id == 0 ? 0 : selectedRow.id,
+      parent_category_id:
+        selectedRow.parent_category_id == 0 ? 0 : selectedRow.id,
     });
     renderTree();
     categorie.isShow = false;
@@ -316,20 +342,25 @@ function onSelectHandle(keys, option, meta) {
 }
 
 function onExpandedHandle(keys, option, meta) {
+  if (meta.action === 'filter') return;
+
   const hasDir = meta.node.items.some((item) => item.dirType);
+  const photosDesc = resourceTypeEnum.getDescFromValue(resourceTypeEnum.PHOTOS);
+  const videosDesc = resourceTypeEnum.getDescFromValue(resourceTypeEnum.VIDEOS);
+
   if (!hasDir && meta.node.parent_category_id) {
     meta.node.items.unshift({
-      id: PHOTOS_DIR_KEY + meta.node.id,
-      name: 'Photos',
+      id: photosDesc + meta.node.id,
+      name: photosDesc,
       category_id: meta.node.id,
-      dirType: PHOTOS_DIR_KEY,
+      dirType: resourceTypeEnum.PHOTOS,
       items: null,
     });
     meta.node.items.unshift({
-      id: VIDEOS_DIR_KEY + meta.node.id,
-      name: 'Video',
+      id: videosDesc + meta.node.id,
+      name: videosDesc,
       category_id: meta.node.id,
-      dirType: VIDEOS_DIR_KEY,
+      dirType: resourceTypeEnum.VIDEOS,
       items: null,
     });
   }

@@ -27,11 +27,10 @@
                 @select="onSelect"
               >
                 <n-button :bordered="false" style="padding: 0 4px">
-                  <img
-                    style="height: 10px; margin-right: 5px"
-                    src="https://img2.baidu.com/it/u=1882482103,2575197468&fm=253&fmt=auto&app=138&f=JPEG?w=750&h=500"
-                  />
-                  <span class="user">{{ user }}</span>
+                  <n-space align="center">
+                    <n-avatar round size="small" :src="header" />
+                    <span class="user">{{ user }}</span>
+                  </n-space>
                 </n-button>
               </n-dropdown>
             </template>
@@ -90,6 +89,8 @@ import {
   NForm,
   NFormItem,
   NInput,
+  NAvatar,
+  NSpace,
 } from 'naive-ui';
 import { ref, reactive } from 'vue';
 import MenuBar from '@/components/pc/MenuBar';
@@ -100,8 +101,11 @@ import { getUser, getUserId } from '@/common/cookie';
 import { updateUser } from '@/api/user';
 import router from '@/router';
 import { getSettingConfigs, updateSettingConfigs } from '@/api/setting';
+import adminHeader from '@/assets/header_admin.png';
+import userHeader from '@/assets/header_user.png';
 
 const { message } = createDiscreteApi(['message']);
+const header = isAdmin() ? adminHeader : userHeader;
 
 export default {
   components: {
@@ -116,6 +120,8 @@ export default {
     NForm,
     NFormItem,
     NInput,
+    NAvatar,
+    NSpace,
     MenuBar,
     CategorieTree,
     PopupWindow,
@@ -224,6 +230,7 @@ export default {
       onSelect,
       updatePwd,
       user: getUser(),
+      header,
       logoUrl,
       webName,
     };
@@ -245,7 +252,7 @@ export default {
   }
   .content {
     padding: 10px;
-    height: calc(100% - 50px);
+    height: calc(100% - 61px);
     background: #f0f2f5;
     text-align: initial;
     .admin-content {

@@ -160,9 +160,3 @@ function handleBack() {
   }
 }
 </style>
-<style>
-.n-page-header {
-  height: auto;
-  margin-bottom: 15px;
-}
-</style>

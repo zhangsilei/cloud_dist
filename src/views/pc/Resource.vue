@@ -13,14 +13,19 @@
       </n-breadcrumb>
 
       <template v-if="isShowResource">
-        <n-input round clearable placeholder="Search" v-model:value="query.key">
+        <n-input
+          round
+          clearable
+          placeholder="Search"
+          v-model:value="state.query.key"
+        >
           <template #prefix>
             <n-icon :component="IosSearch" />
           </template>
         </n-input>
-        <n-button @click="renderResources" style="margin-left: 10px"
-          >查询</n-button
-        >
+        <n-button @click="renderResources" style="margin-left: 10px">
+          查询
+        </n-button>
       </template>
     </div>
 
@@ -51,17 +56,18 @@
         <template v-if="isShowDir">
           <n-grid-item v-for="(item, index) in state.fileNames" :key="index">
             <dir-card
-              :file-name="item"
-              @click="renderResources(item)"
+              :file-name="item.label"
+              @click="onClickDir(item)"
             ></dir-card>
           </n-grid-item>
         </template>
         <n-grid-item v-for="(item, index) in state.dataList" :key="index">
           <video-card
+            :id="index"
             :file-name="item.name"
             :like-num="item.like_num"
             :poster="parseUrlToPath(item.picture_url)"
-            :authority="!item.authority"
+            :authority="item.has_permissions"
             @on-detail="detailResource(item)"
             @click.native="goToDetailPage(item)"
           ></video-card>
@@ -69,8 +75,9 @@
       </n-grid>
       <n-pagination
         style="justify-content: flex-end"
-        v-model:page="query.page_num"
-        :page-count="pageCount"
+        v-model:page="state.query.page_num"
+        :item-count="state.total"
+        :on-update:page="changePage"
       />
     </div>
 
@@ -134,13 +141,91 @@ import {
   deleteResource,
   updateResource,
 } from '@/api/resource';
-import { parseUrlToPath } from '@/common/global';
+import {
+  parseUrlToPath,
+  getBreadcrumbCategory,
+  popularCategoryEnum,
+  favoriteTypeEnum,
+  resourceSortEnum,
+  resourceTypeEnum,
+  POPULAR_CATEGORY_KEY,
+} from '@/common/global';
 import PopupWindow from '@/components/pc/PopupWindow';
 import moment from 'moment';
 import { useRouter } from 'vue-router';
+import { getLikeList } from '@/api/like';
 
 const store = useStore();
 const router = useRouter();
+
+// 返回目录页
+function back() {
+  state.dataList = [];
+  isShowDir.value = true;
+  isShowResource.value = false;
+}
+
+// 排序方式
+function sort(type) {
+  state.query.order_by = type;
+  renderResources();
+}
+
+// 资源列表
+const state = reactive({
+  fileNames: [
+    {
+      label: resourceTypeEnum.getDescFromValue(resourceTypeEnum.VIDEOS),
+      value: resourceTypeEnum.VIDEOS,
+    },
+    {
+      label: resourceTypeEnum.getDescFromValue(resourceTypeEnum.PHOTOS),
+      value: resourceTypeEnum.PHOTOS,
+    },
+  ],
+  // breadcrumbs: [],
+  loading: false,
+  dataList: [],
+  total: 0,
+  query: {
+    page_num: 1,
+    page_size: 10,
+    category_id: null,
+    key: null,
+    order_by: resourceSortEnum.DEFAULT,
+    resource_type: null,
+    // order_type: '',
+  },
+});
+
+function onClickDir(item) {
+  state.query.resource_type = item.value;
+  renderFavorite();
+}
+
+async function renderResources() {
+  // query.category_id = selectedCategory.value;
+  // if (type === 'Videos') {
+  //   query.resource_type = 1;
+  // } else if (type === 'Photos') {
+  //   query.resource_type = 2;
+  // }
+  state.loading = true;
+  const res = await getResourceList(state.query);
+  const dataList = res.resources || [];
+
+  state.dataList = dataList;
+  state.total = res.total;
+
+  isShowDir.value = false;
+  isShowResource.value = true;
+  state.loading = false;
+}
+
+function changePage(page) {
+  state.query.page_num = page;
+  renderResources();
+}
 
 const FAVORITE_DIR_KEY = 'Favorite';
 const MY_FAVORITE_DIR_KEY = 'MyFavorite';
@@ -150,102 +235,81 @@ const PHOTOS_DIR_KEY = 'Photos';
 const SORT_TYPE_DEFAULT = '';
 const SORT_TYPE_POPULAR = 'like_num';
 const pageCount = ref(null);
-const query = reactive({
-  page_num: 1,
-  page_size: 10,
-  category_id: null,
-  key: null,
-  order_by: SORT_TYPE_DEFAULT,
-  resource_type: null,
-  // order_type: '',
-});
-const state = reactive({
-  fileNames: ['Videos', 'Photos'],
-  breadcrumbs: [],
-  dataList: [],
-});
-const isShowDir = ref(false);
+// const query = reactive({
+//   page_num: 1,
+//   page_size: 10,
+//   category_id: null,
+//   key: null,
+//   order_by: SORT_TYPE_DEFAULT,
+//   resource_type: null,
+//   // order_type: '',
+// });
+
 const isShowResource = ref(false);
-const isDefault = computed(() => query.order_by === SORT_TYPE_DEFAULT);
-const isPorpular = computed(() => query.order_by === SORT_TYPE_POPULAR);
+const isDefault = computed(() => state.query.order_by === SORT_TYPE_DEFAULT);
+const isPorpular = computed(() => state.query.order_by === SORT_TYPE_POPULAR);
 
 const activeStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
+
+const isShowDir = ref(false);
 const selectedCategory = ref(null);
 const breadcrumbCategory = ref([]);
 
-function sort(type) {
-  query.order_by = type;
-  renderResources();
-}
-
-function filterTableMater(id, arr) {
-  const queue = [...arr];
-  while (queue.length) {
-    const o = queue.shift();
-    if (o.id === id) return o;
-    queue.push(...(o.items || []));
+function getBreadcrumb(allCategories, category_id) {
+  switch (category_id) {
+    case popularCategoryEnum.POPULAR:
+      return [
+        popularCategoryEnum.getDescFromValue(popularCategoryEnum.POPULAR),
+      ];
+    case favoriteTypeEnum.FAVORITE:
+      return [
+        popularCategoryEnum.getDescFromValue(popularCategoryEnum.POPULAR),
+        favoriteTypeEnum.getDescFromValue(favoriteTypeEnum.FAVORITE),
+      ];
+    case favoriteTypeEnum.MY_FAVORITE:
+      return [
+        popularCategoryEnum.getDescFromValue(popularCategoryEnum.POPULAR),
+        favoriteTypeEnum.getDescFromValue(favoriteTypeEnum.MY_FAVORITE),
+      ];
+    default:
+      return getBreadcrumbCategory(allCategories, category_id);
   }
-}
-
-function getBreadcrumbCategory(arr, id, result = []) {
-  const re = filterTableMater(id, arr);
-  if (!re) return result;
-  result.unshift(re.name);
-  if (re.parent_category_id) {
-    return getBreadcrumbCategory(arr, re.parent_category_id, result);
-  }
-  return result;
-}
-
-async function renderResources(type) {
-  query.category_id = selectedCategory.value;
-  if (type === 'Videos') {
-    query.resource_type = 1;
-  } else if (type === 'Photos') {
-    query.resource_type = 2;
-  }
-  const res = await getResourceList(query);
-  state.dataList = res.resources || [];
-  pageCount.value =
-    res.total % query.page_size
-      ? res.total / query.page_size
-      : res.total / query.page_size + 1;
-
-  isShowDir.value = false;
-  isShowResource.value = true;
-  // loading.value = false;
 }
 
 watch(store.state, (val) => {
-  let id = val.selectedCategory.dirType
+  const dirType = val.selectedCategory.dirType;
+  const id = dirType
     ? val.selectedCategory.category_id
     : val.selectedCategory.id;
+  const isFavorite = [
+    favoriteTypeEnum.MY_FAVORITE,
+    favoriteTypeEnum.FAVORITE,
+  ].includes(val.selectedCategory.id);
+
   selectedCategory.value = id;
-  breadcrumbCategory.value = getBreadcrumbCategory(val.allCategories, id);
-  isShowDir.value = val.selectedCategory.dirType;
-  if (val.selectedCategory.dirType) {
-    if (
-      val.selectedCategory.dirType === FAVORITE_DIR_KEY ||
-      val.selectedCategory.dirType === MY_FAVORITE_DIR_KEY
-    ) {
-      state.dataList = [];
-      isShowResource.value = false;
-    } else if (val.selectedCategory.dirType === VIDEOS_DIR_KEY) {
-      isShowDir.value = false;
-      isShowResource.value = true;
-      renderResources('Videos');
-    } else if (val.selectedCategory.dirType === PHOTOS_DIR_KEY) {
-      isShowDir.value = false;
-      isShowResource.value = true;
-      renderResources('Photos');
-    }
+  if (!dirType) {
+    breadcrumbCategory.value = getBreadcrumb(
+      val.allCategories,
+      val.selectedCategory.id
+    );
+  }
+  isShowDir.value = isFavorite;
+  state.query.category_id = id;
+  state.query.resource_type = dirType;
+  if (dirType !== undefined) {
+    isShowDir.value = false;
+    renderResources();
+  } else {
+    state.dataList = [];
   }
 });
 
-function back() {
-  state.dataList = [];
-  isShowDir.value = true;
-  isShowResource.value = false;
+async function renderFavorite() {
+  const res = await getLikeList({
+    page_num: state.query.page_num,
+    page_size: state.query.page_size,
+    resource_type: state.query.resource_type,
+  });
 }
 
 const detail = reactive({
@@ -265,20 +329,17 @@ async function detailResource(item) {
     store.state.allCategories,
     store.state.selectedCategory
   );
-  detail.created_time = moment(res.created_time * 1000).format(
-    'YYYY-MM-DD HH:mm:ss'
-  );
-  detail.updated_time = moment(res.updated_time * 1000).format(
-    'YYYY-MM-DD HH:mm:ss'
-  );
+  detail.created_time = formatDate(res.created_time);
+  detail.updated_time = formatDate(res.updated_time);
   detail.isShow = true;
 }
 
 function goToDetailPage(item) {
+  if (!item.has_permissions) return;
   router.push({
     path: '/resource/detail',
     query: {
-      ...query,
+      ...state.query,
       currentId: item.id,
     },
   });

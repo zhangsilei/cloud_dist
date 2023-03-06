@@ -5,41 +5,30 @@
     <div class="resource-wrap">
       <n-space class="filter">
         <n-form-item label-placement="left" label="关键字">
-          <n-input v-model:value="query.key" clearable></n-input>
+          <n-input v-model:value="resource.query.key" clearable></n-input>
         </n-form-item>
         <n-form-item label-placement="left">
-          <n-button type="primary" @click="queryList"> 查询 </n-button>
+          <n-button type="primary" @click="query"> 查询 </n-button>
         </n-form-item>
         <n-form-item label-placement="left">
           <n-button @click="reset"> 重置 </n-button>
         </n-form-item>
       </n-space>
 
-      <n-space v-if="isShowResource" class="action">
-        <n-button
-          v-if="dirType === VIDEOS_DIR_KEY"
-          type="primary"
-          @click="onClickUpload(TYPE_VIDEO)"
-        >
-          上传视频
-        </n-button>
-        <n-button
-          v-if="dirType === PHOTOS_DIR_KEY"
-          type="primary"
-          @click="onClickUpload(TYPE_IMAGE)"
-        >
-          上传图片
+      <n-space v-if="isVideo || isPhoto" class="action">
+        <n-button type="primary" @click="onClickUpload">
+          {{ resource.title }}
         </n-button>
       </n-space>
 
       <div class="content">
         <n-empty
-          v-if="!dataList.length"
+          v-if="!resource.dataList.length"
           description="暂无数据"
           style="margin-top: 100px; flex: 1"
         ></n-empty>
         <n-grid v-else :x-gap="8" :y-gap="8" :cols="8" style="margin-top: 10px">
-          <n-grid-item v-for="(item, index) in dataList" :key="index">
+          <n-grid-item v-for="(item, index) in resource.dataList" :key="index">
             <video-card
               :id="item.id"
               :file-name="item.name"
@@ -54,8 +43,9 @@
         </n-grid>
         <n-pagination
           style="justify-content: flex-end"
-          v-model:page="query.page_num"
-          :page-count="pageCount"
+          v-model:page="resource.query.page_num"
+          :item-count="resource.total"
+          :on-update:page="changePage"
         />
       </div>
     </div>
@@ -82,11 +72,7 @@
         <n-form-item label="名称" path="name">
           <n-input v-model:value="resource.formData.name" />
         </n-form-item>
-        <n-form-item
-          v-if="resource.type === TYPE_VIDEO"
-          label="视频"
-          path="video_url"
-        >
+        <n-form-item v-if="isVideo" label="视频" path="video_url">
           <n-upload directory-dnd @change="onUpload">
             <n-upload-dragger>
               <div style="margin-bottom: 12px">
@@ -95,17 +81,13 @@
                 </n-icon>
               </div>
               <n-text style="font-size: 14px"> 添加视频 </n-text>
-              <n-p depth="3" style="margin: 8px 0 0 0">
+              <!-- <n-p depth="3" style="margin: 8px 0 0 0">
                 （图片大小不超过100M）
-              </n-p>
+              </n-p> -->
             </n-upload-dragger>
           </n-upload>
         </n-form-item>
-        <n-form-item
-          v-if="dirType === PHOTOS_DIR_KEY"
-          label="图片"
-          path="picture_url"
-        >
+        <n-form-item v-if="isPhoto" label="图片" path="picture_url">
           <n-upload directory-dnd @change="onUpload">
             <n-upload-dragger>
               <div style="margin-bottom: 12px">
@@ -114,9 +96,9 @@
                 </n-icon>
               </div>
               <n-text style="font-size: 16px"> 上传图片 </n-text>
-              <n-p depth="3" style="margin: 8px 0 0 0">
-                (图片大小不超过1M）
-              </n-p>
+              <!-- <n-p depth="3" style="margin: 8px 0 0 0">
+                （图片大小不超过1M）
+              </n-p> -->
             </n-upload-dragger>
           </n-upload>
         </n-form-item>
@@ -151,7 +133,7 @@
           <n-form-item label-placement="left" label="上传时间">
             <div>{{ detail.created_time }}</div>
           </n-form-item>
-          <n-form-item label-placement="left" label="最后修改时间">
+          <n-form-item label-placement="left" label="最后修改">
             <div>{{ detail.updated_time }}</div>
           </n-form-item>
         </div>
@@ -260,7 +242,7 @@ import {
   NImage,
   useDialog,
 } from 'naive-ui';
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { CameraOutline, Add } from '@vicons/ionicons5';
 import { Photo } from '@vicons/tabler';
 import DirCard from '@/components/pc/DirCard';
@@ -274,6 +256,10 @@ import {
   RESOURCE_TYPE_VIDEO,
   RESOURCE_TYPE_PICTURE,
   parseUrlToPath,
+  getBreadcrumbCategory,
+  resourceSortEnum,
+  resourceTypeEnum,
+  formatDate,
 } from '@/common/global';
 import {
   getResourceList,
@@ -288,17 +274,46 @@ import moment from 'moment';
 const store = useStore();
 const { message, dialog } = createDiscreteApi(['message', 'dialog']);
 
-const TYPE_VIDEO = 1;
-const TYPE_IMAGE = 2;
-const VIDEOS_DIR_KEY = 'Videos';
-const PHOTOS_DIR_KEY = 'Photos';
+// 筛选查询
+function query() {
+  renderResources();
+}
 
+function reset() {
+  resource.query.key = null;
+}
+
+// 上传按钮
+const isVideo = computed(
+  () => resource.query.resource_type === resourceTypeEnum.VIDEOS
+);
+const isPhoto = computed(
+  () => resource.query.resource_type === resourceTypeEnum.PHOTOS
+);
+
+function onClickUpload() {
+  resource.isShow = true;
+}
+
+// 上传资源
+const uplodFile = ref(null);
 const resourceRef = ref(null);
 const resource = reactive({
+  loading: false,
   isShow: false,
-  isEdit: false,
-  title: '上传视频',
-  type: null,
+  title: null,
+  dataList: [],
+  total: 0,
+  query: {
+    page_num: 1,
+    page_size: 10,
+    category_id: null,
+    key: null,
+    order_by: resourceSortEnum.DEFAULT,
+    resource_type: null,
+    // order_type: '',
+  },
+  resource_id: null,
   formData: ref({
     category_id: null,
     resource_type: null,
@@ -320,11 +335,6 @@ const resource = reactive({
     },
   },
 });
-const dataList = ref([]);
-const loading = ref(true);
-const selectedCategory = ref(null);
-const breadcrumbCategory = ref([]);
-const uplodFile = ref(null);
 
 function onUpload({ file }) {
   uplodFile.value = file;
@@ -337,7 +347,7 @@ function onUpload({ file }) {
     }
     uplodFile.value.percentage += Math.random() * 30;
   }, 1000);
-  if (dirType.value === VIDEOS_DIR_KEY) {
+  if (isVideo.value) {
     postVideo(file).then(({ picture_url, video_url }) => {
       resource.formData.picture_url = picture_url;
       resource.formData.video_url = video_url;
@@ -346,7 +356,8 @@ function onUpload({ file }) {
         uplodFile.value.status = 'finished';
       }, 0);
     });
-  } else if (dirType.value === PHOTOS_DIR_KEY) {
+  }
+  if (isPhoto.value) {
     postPicture(file).then(({ url }) => {
       resource.formData.picture_url = url;
       resource.formData.video_url = '';
@@ -358,19 +369,14 @@ function onUpload({ file }) {
   }
 }
 
-const isLocal = location.hostname === 'localhost';
-
 function onResourceConfirm() {
   resourceRef.value
     ?.validate(async (errors) => {
       if (!errors) {
-        if (!resource.isEdit) {
+        if (!resource.resource_id) {
           await createResource(resource.formData);
         } else {
-          await updateResource(
-            resource.formData.category_id,
-            resource.formData
-          );
+          await updateResource(resource.resource_id, resource.formData);
         }
         resource.isShow = false;
         message.success('操作成功！');
@@ -380,102 +386,50 @@ function onResourceConfirm() {
     .catch();
 }
 
-function onClickUpload(type) {
-  resource.type = type;
-  resource.isShow = true;
-  resource.formData.resource_type = type;
-  resource.isEdit = false;
+// 资源列表
+async function renderResources() {
+  resource.loading = true;
+  const res = await getResourceList(resource.query);
+  resource.dataList = res.resources || [];
+  resource.total = res.total;
+  resource.loading = false;
 }
-const SORT_TYPE_DEFAULT = '';
-const SORT_TYPE_POPULAR = 'like_num';
-const pageCount = ref(null);
-const query = reactive({
-  page_num: 1,
-  page_size: 10,
-  category_id: null,
-  key: null,
-  order_by: SORT_TYPE_DEFAULT,
-  resource_type: null,
-  // order_type: '',
-});
 
-function queryList() {
+function changePage(page) {
+  resource.query.page_num = page;
   renderResources();
 }
 
-function reset() {}
-
-async function renderResources(type) {
-  query.category_id = selectedCategory.value.id;
-  if (type === 'Videos') {
-    query.resource_type = 1;
-  } else if (type === 'Photos') {
-    query.resource_type = 2;
-  }
-  const res = await getResourceList(query);
-  dataList.value = res.resources || [];
-  pageCount.value =
-    res.total % query.page_size
-      ? res.total / query.page_size
-      : res.total / query.page_size + 1;
-  loading.value = false;
-}
-
-function filterTableMater(id, arr) {
-  const queue = [...arr];
-  while (queue.length) {
-    const o = queue.shift();
-    if (o.id === id) return o;
-    queue.push(...(o.items || []));
-  }
-}
-
-function getBreadcrumbCategory(arr, id, result = []) {
-  const re = filterTableMater(id, arr);
-  if (!re) return result;
-  result.unshift(re.name);
-  if (re.parent_category_id) {
-    return getBreadcrumbCategory(arr, re.parent_category_id, result);
-  }
-  return result;
-}
-
-const dirType = ref(null);
+const selectedCategory = ref(null);
+const breadcrumbCategory = ref([]);
 
 watch(store.state, (val) => {
-  let id = val.selectedCategory.dirType
+  const dirType = val.selectedCategory.dirType;
+  const id = dirType
     ? val.selectedCategory.category_id
     : val.selectedCategory.id;
+  const typeMap = {
+    [resourceTypeEnum.VIDEOS]: '上传视频',
+    [resourceTypeEnum.PHOTOS]: '上传图片',
+  };
+
   selectedCategory.value = id;
   breadcrumbCategory.value = getBreadcrumbCategory(val.allCategories, id);
+
+  resource.title = typeMap[dirType];
   resource.formData.category_id = id;
-  query.category_id = id;
-  isShowResource.value = val.selectedCategory.dirType;
-  dirType.value = val.selectedCategory.dirType;
-  if (val.selectedCategory.dirType) {
-    if (val.selectedCategory.dirType === VIDEOS_DIR_KEY) {
-      renderResources('Videos');
-    } else if (val.selectedCategory.dirType === PHOTOS_DIR_KEY) {
-      renderResources('Photos');
-    }
+  resource.formData.resource_type = dirType;
+  resource.query.category_id = id;
+  resource.query.resource_type = dirType;
+
+  if (dirType !== undefined) {
+    renderResources();
   } else {
-    dataList.value = [];
+    resource.dataList = [];
   }
 });
 
-watch(
-  () => resource.isShow,
-  (val) => {
-    if (!val) {
-      for (const key in resource.formData) {
-        if (Object.hasOwnProperty.call(resource.formData, key)) {
-          resource.formData[key] = null;
-        }
-      }
-    }
-  }
-);
-
+// 资源详情
 const detail = reactive({
   isShow: false,
   picture_url: '',
@@ -486,28 +440,24 @@ const detail = reactive({
 });
 
 function editRes(item) {
-  resource.formData.category_id = item.id;
+  resource.resource_id = item.id;
+  resource.formData.category_id = item.category_id;
   resource.formData.name = item.name;
+  resource.formData.description = item.description;
   resource.formData.picture_url = item.picture_url;
   resource.formData.video_url = item.video_url;
   resource.formData.resource_type = item.resource_type;
-  resource.type = item.resource_type;
   resource.isShow = true;
-  resource.isEdit = true;
 }
 async function detailResource(item) {
   const res = await getResourceDetail(item.id);
   detail.picture_url = parseUrlToPath(res.picture_url);
   detail.name = res.name;
+  detail.created_time = formatDate(res.created_time);
+  detail.updated_time = formatDate(res.updated_time);
   detail.breadcrumbCategory = getBreadcrumbCategory(
     store.state.allCategories,
     store.state.selectedCategory
-  );
-  detail.created_time = moment(res.created_time * 1000).format(
-    'YYYY-MM-DD HH:mm:ss'
-  );
-  detail.updated_time = moment(res.updated_time * 1000).format(
-    'YYYY-MM-DD HH:mm:ss'
   );
   detail.isShow = true;
 }
@@ -524,8 +474,18 @@ function deleteRes(item) {
     onNegativeClick: () => {},
   });
 }
-
-const isShowResource = ref(false);
+watch(
+  () => resource.isShow,
+  (val) => {
+    if (!val) {
+      for (const key in resource.formData) {
+        if (Object.hasOwnProperty.call(resource.formData, key)) {
+          resource.formData[key] = null;
+        }
+      }
+    }
+  }
+);
 </script>
 
 <style lang="scss" scoped>

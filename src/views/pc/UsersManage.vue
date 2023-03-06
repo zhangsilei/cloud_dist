@@ -32,6 +32,36 @@
       />
     </div>
 
+    <n-drawer v-model:show="activation.isShow" :width="700">
+      <n-drawer-content closable>
+        <template #header>
+          <n-space align="center">
+            <n-avatar round size="small" :src="header" />
+            <div style="font-size: 14px">{{ username }}</div>
+          </n-space>
+        </template>
+        <div style="display: flex; flex-direction: column">
+          <n-data-table
+            :max-height="maxHeight"
+            :loading="activation.loading"
+            :columns="activation.columns"
+            :data="activation.dataList"
+            :bordered="false"
+            :on-update:page="(page) => (activation.params.page_num = page)"
+            :on-update:page-size="
+              (size) => (activation.params.page_size = size)
+            "
+          />
+          <n-pagination
+            v-model:page="activation.params.page_num"
+            :item-count="activation.total"
+            :on-update:page="activation.changePage"
+            style="align-self: flex-end; margin-top: 10px"
+          />
+        </div>
+      </n-drawer-content>
+    </n-drawer>
+
     <popup-window
       v-model="isShowPwdAlert"
       title="重置密码"
@@ -54,11 +84,144 @@ import {
   NDataTable,
   NSpace,
   NPagination,
+  NDrawer,
+  NDrawerContent,
+  NImage,
+  NAvatar,
 } from 'naive-ui';
 import { ref, h, onMounted, reactive, computed } from 'vue';
 import PopupWindow from '@/components/pc/PopupWindow.vue';
 import { getUserList, updateUser } from '@/api/user';
-import { getTableMaxHeight } from '@/common/global';
+import { getActivationCodeList } from '@/api/activation';
+import { getTableMaxHeight, isAdmin } from '@/common/global';
+import adminHeader from '@/assets/header_admin.png';
+import userHeader from '@/assets/header_user.png';
+import { getUser, getUserId } from '@/common/cookie';
+import moment from 'moment';
+import Clipboard from 'clipboard';
+
+const header = isAdmin() ? adminHeader : userHeader;
+const username = getUser();
+const activation = reactive({
+  loading: false,
+  isShow: false,
+  dataList: [],
+  total: 0,
+  params: {
+    page_num: 1,
+    page_size: 10,
+    user_id: getUserId(),
+  },
+  columns: [
+    {
+      title: '激活码',
+      key: 'activation_code.code',
+      width: 130,
+      render(row) {
+        return h(
+          // NButton,
+          'span',
+          {
+            'data-clipboard-text': row.activation_code.code,
+            id: row.activation_code.code,
+            // onClick() {
+            //   copyContact(row.activation_code.code);
+            //   message.success('复制成功！');
+            // },
+          },
+          row.activation_code.code
+        );
+      },
+    },
+    {
+      title: '激活分区',
+      key: 'category.name',
+      width: 160,
+      ellipsis: {
+        tooltip: true,
+      },
+    },
+    {
+      title: '有效期',
+      key: 'activation_code.valid_duration',
+      render(row) {
+        return h(
+          'span',
+          null,
+          row.activation_code.valid_duration / (3600 * 24) + '天'
+        );
+      },
+    },
+    {
+      title: '激活时间',
+      key: 'activation_code.use_time',
+      render(row) {
+        return h(
+          'span',
+          null,
+          row.activation_code.use_time
+            ? moment(row.activation_code.use_time * 1000).format(
+                'YYYY-MM-DD HH:mm:ss'
+              )
+            : '--'
+        );
+      },
+    },
+    {
+      title: '到期时间',
+      key: 'activation_code.expiration_time',
+      render(row) {
+        return h(
+          'span',
+          null,
+          row.activation_code.expiration_time
+            ? moment(row.activation_code.use_time * 1000).format(
+                'YYYY-MM-DD HH:mm:ss'
+              )
+            : '--'
+        );
+      },
+    },
+  ],
+  changePage: (page) => {
+    activation.params.page_num = page;
+    renderActivationList();
+  },
+});
+const maxHeight = ref(0);
+let clipboard = null;
+
+const copyContact = (id) => {
+  if (!clipboard) {
+    initClipboard(id);
+  }
+  clipboard.on('success', (e) => {
+    console.log('copy succ');
+    e.clearSelection();
+    initClipboard(id);
+  });
+  clipboard.on('error', (e) => {
+    console.log('copy fail');
+  });
+};
+
+const initClipboard = (id) => {
+  clipboard && clipboard.destroy();
+  clipboard = null;
+  clipboard = new Clipboard(`#${id}`);
+};
+
+onMounted(() => {
+  maxHeight.value = document.body.clientHeight - 63 - 38 - 80;
+});
+
+async function renderActivationList() {
+  activation.loading = true;
+  const res = await getActivationCodeList(activation.params);
+  activation.dataList = res.activation_codes || [];
+  activation.total = res.total;
+  activation.loading = false;
+}
 
 function query() {
   userParams.value.page_num = 1;
@@ -100,6 +263,10 @@ const columns = [
           style: {
             color: 'rgb(24, 160, 88)',
             cursor: 'pointer',
+          },
+          onClick: () => {
+            activation.isShow = true;
+            renderActivationList();
           },
         },
         row.activation_code_num

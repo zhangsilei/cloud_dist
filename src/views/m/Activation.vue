@@ -1,7 +1,11 @@
 <template>
   <div class="activation-container">
     <!-- 头部导航 -->
-    <PageHeader title="Activation code" @back="goBack" />
+    <PageHeader
+      title="Activation code"
+      @back="goBack"
+      style="padding: 0 10px"
+    />
     <!-- 激活码表单 -->
     <n-form
       class="form"

@@ -5,6 +5,8 @@ import {
   removeUser,
   removeUserId,
 } from './cookie';
+import createEnum from './createEnum';
+import moment from 'moment';
 
 export const ROLE_ADMIN = 'ADMIN';
 export const ROLE_USER = 'CUSTOMER';
@@ -60,20 +62,78 @@ export function parseUrlToPath(url) {
   const testEnv = 'http://140.210.213.108/';
   const prodEnv = 'http://176.123.9.123:8080/';
 
-  const isServer = () => location.hostname !== 'localhost';
+  const isServer = () =>
+    location.hostname !== 'localhost' || url.indexOf('http') === 0;
+  const isLocalImg = () => url.indexOf('/img/') !== -1;
   const endWithSlash = (str) => str.charAt(str.length - 1) === '/';
   const startWithSlash = (str) => str.substring(0, 1) === '/';
 
-  if (isServer(url)) return url;
+  if (isServer() || isLocalImg()) return url;
 
   return endWithSlash(testEnv) && startWithSlash(url)
     ? testEnv + url.slice(1, url.length)
     : testEnv + url;
 }
 
-export const TYPE_DIR_FAVORITE = 0;
-export const TYPE_DIR_VIDEO = 0;
-export const TYPE_DIR_PICTURE = 0;
+export const resourceTypeEnum = createEnum({
+  VIDEOS: ['VIDEO', 'Videos'],
+  PHOTOS: ['PICTURE', 'Photos'],
+});
 
-export const RESOURCE_TYPE_VIDEO = 'VIDEO';
-export const RESOURCE_TYPE_PICTURE = 'PICTURE';
+export const favoriteTypeEnum = createEnum({
+  FAVORITE: ['Most_favorite', 'Most favorite'],
+  MY_FAVORITE: ['My_favorite', 'My favorite'],
+});
+
+export const popularCategoryEnum = createEnum({
+  POPULAR: ['popularity', 'Popularity'],
+});
+
+export const resourceSortEnum = createEnum({
+  DEFAULT: ['', '默认'],
+  POPULAR: ['line_num', '人气'],
+});
+
+export function filterTableMater(id, arr) {
+  const queue = [...arr];
+  while (queue.length) {
+    const o = queue.shift();
+    if (o.id === id) return o;
+    queue.push(...(o.items || []));
+  }
+}
+
+export function getBreadcrumbCategory(arr, id, result = []) {
+  const re = filterTableMater(id, arr);
+  if (!re) return result;
+  result.unshift(re.name);
+  if (re.parent_category_id) {
+    return getBreadcrumbCategory(arr, re.parent_category_id, result);
+  }
+  return result;
+}
+
+export function formatDate(second, format) {
+  return moment(second * 1000).format(format || 'YYYY-MM-DD HH:mm:ss');
+}
+
+export const RESOURCE_TYPE_VIDEO = 1;
+export const RESOURCE_TYPE_PICTURE = 2;
+
+export const DIR_FAVORITE_KEY = 'Most favorite';
+export const DIR_FAVORITE_LABEL = 'Most favorite';
+export const DIR_MY_FAVORITE_KEY = 'My favorite';
+export const DIR_MY_FAVORITE_LABEL = 'My favorite';
+
+export const DIR_VIDEOS_KEY = 1;
+export const DIR_VIDEOS_LABEL = 'Videos';
+export const DIR_PHOTOS_KEY = 2;
+export const DIR_PHOTOS_LABEL = 'Photos';
+
+export const DEFAULT_SORT_KEY = '';
+export const DEFAULT_SORT_LABEL = '默认';
+export const POPULAR_SORT_KEY = 'line_num';
+export const POPULAR_SORT_LABEL = '人气';
+
+export const POPULAR_CATEGORY_KEY = 'popularity';
+export const POPULAR_CATEGORY_VALUE = 'Popularity';

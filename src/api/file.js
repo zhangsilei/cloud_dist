@@ -13,6 +13,7 @@ export function postVideo(file) {
       token: getToken(),
     },
     data: formData,
+    timeout: 60 * 5 * 1000,
   });
 }
 

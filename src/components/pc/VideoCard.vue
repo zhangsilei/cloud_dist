@@ -71,6 +71,7 @@
 
 <script>
 import {
+  createDiscreteApi,
   NIcon,
   NModal,
   NForm,
@@ -86,6 +87,9 @@ import { MessageFilled } from '@vicons/antd';
 import PopupWindow from '@/components/pc/PopupWindow';
 import Clipboard from 'clipboard';
 import { isAdmin } from '@/common/global';
+import { useActivationCode } from '@/api/activation';
+
+const { message } = createDiscreteApi(['message']);
 
 export default {
   name: 'VideoCard',
@@ -142,9 +146,11 @@ export default {
     // 激活码
     const setCdkey = () => {
       formRef.value
-        ?.validate((errors) => {
+        ?.validate(async (errors) => {
           if (!errors) {
+            await useActivationCode(formData.cdKey);
             isShowCdkeyAlert.value = false;
+            message.success('操作成功！');
           }
         })
         .catch((e) => {});
