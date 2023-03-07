@@ -16,10 +16,10 @@ export function getLikeList(params) {
   });
 }
 
-export function deleteLike(params) {
+export function deleteLike(data) {
   return request({
     url: '/likes',
     method: 'delete',
-    params,
+    data,
   });
 }

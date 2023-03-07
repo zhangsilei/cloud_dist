@@ -2,14 +2,14 @@
   <div class="resource-container">
     <!-- 头部搜索 -->
     <div class="search-wrap">
-      <n-input round placeholder="搜索">
+      <n-input round placeholder="搜索" :on-focus="onFocusSearch">
         <template #prefix>
           <n-icon :component="IosSearch" />
         </template>
       </n-input>
       <n-avatar class="user" round :src="userHeader" @click="navigateToUser" />
     </div>
-    <!-- 分类标签 -->
+    <!-- 一级分类标签 -->
     <div class="tags-wrap">
       <n-tag
         v-for="item in tags"
@@ -25,7 +25,7 @@
     <!-- 子分类列表 -->
     <n-spin class="list-wrap" :show="loading">
       <n-grid x-gap="12" y-gap="12" :cols="4">
-        <n-gi v-for="item in dataList" @click="navigateToList(item)">
+        <n-gi v-for="item in dataList" @click="onClickChildCategory(item)">
           <img class="poster" :src="parseUrlToPath(item.picture_url)" />
           <div>
             <n-ellipsis style="max-width: 75px">
@@ -148,10 +148,23 @@ watch(selectedTag, (val) => {
   renderList();
 });
 
-function navigateToList(item) {
+function onFocusSearch() {
+  navigateToList({ isFromSearch: true });
+}
+
+function onClickChildCategory(item) {
+  const isFavorite = [DIR_MY_FAVORITE_KEY, DIR_FAVORITE_KEY].includes(item.id);
+  if (isFavorite) {
+    navigateToList({ isFromFavorite: true, category_id: item.id });
+  } else {
+    navigateToList({ category_id: item.id, name: item.name });
+  }
+}
+
+function navigateToList(query) {
   router.push({
     path: '/m/resource/list',
-    query: { category_id: item.id, name: item.name },
+    query,
   });
 }
 </script>

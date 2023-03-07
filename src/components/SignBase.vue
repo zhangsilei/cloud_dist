@@ -2,11 +2,7 @@
   <div class="signbase-container">
     <template v-if="!isShowSucc">
       <div class="logo">
-        <n-avatar
-          round
-          :size="48"
-          src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-        />
+        <n-avatar round :size="48" :src="userheader" />
       </div>
       <div class="form">
         <n-form
@@ -118,6 +114,7 @@ import { setRole, setToken, setUser, setUserId } from '@/common/cookie';
 import { isUser } from '@/common/global';
 import Clipboard from 'clipboard';
 import PopupWindow from '@/components/pc/PopupWindow';
+import userheader from '@/assets/header_user.png';
 
 export const TYPE_SIGN_IN = 0;
 export const TYPE_SIGN_UP = 1;
@@ -169,6 +166,7 @@ export default defineComponent({
       contactPhone: 'xxxx',
       copyContactBtn: 'copyContactBtn',
       clipboard: null,
+      userheader,
     };
   },
   computed: {

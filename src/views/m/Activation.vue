@@ -61,6 +61,7 @@ function submit() {
         try {
           await useActivationCode(formData.code);
           message.success('Activation Completed');
+          router.go(-1);
         } catch (e) {
           message.error('Invalid activation code!');
         }

@@ -1,19 +1,35 @@
 <template>
   <div class="resource-list-container">
+    <!-- 头部搜索 -->
+    <div class="search-wrap" v-if="isFromSearch">
+      <n-input
+        v-model:value="query.key"
+        autofocus
+        round
+        placeholder="搜索"
+        :on-input="search"
+      >
+        <template #prefix v-if="!isFromFavorite">
+          <n-icon :component="IosSearch" />
+        </template>
+      </n-input>
+    </div>
+
     <!-- 头部导航 -->
-    <page-header :title="title" @back="goBack">
+    <page-header v-if="!isFromSearch" :title="title" @back="goBack">
       <template #extra>
         <n-icon
           :component="IosSearch"
           size="20"
           depth="3"
           style="vertical-align: middle"
+          @click="navigateToList"
         />
       </template>
     </page-header>
 
     <!-- 子分区列表 -->
-    <div v-if="showChildCategory" class="child-category-list">
+    <div v-if="showChildCategory && !isFromSearch" class="child-category-list">
       <div
         class="item"
         v-for="item in categoryList"
@@ -24,30 +40,21 @@
       </div>
     </div>
 
-    <!-- <div class="category">
-      <n-tag
-        v-for="item in checkList"
-        size="small"
-        round
-        :color="selectedTag.id === item.id ? activeStyle : undefined"
-        @click="selectCatogry(item)"
-      >
-        Game1
-      </n-tag>
-    </div> -->
-
     <!-- 排序标签 -->
-    <n-space>
-      <n-tag
-        v-for="item in tags"
-        size="small"
-        round
-        checkable
-        :checked="sort === item.key"
-        @update:checked="onTagChecked(item)"
-      >
-        {{ item.label }}
-      </n-tag>
+    <n-space v-if="!isFromSearch" justify="space-between">
+      <div>
+        <n-tag
+          v-for="item in tags"
+          size="small"
+          round
+          checkable
+          :checked="order_by === item.key"
+          @update:checked="onSortChange(item)"
+        >
+          {{ item.label }}
+        </n-tag>
+      </div>
+      <n-checkbox v-model:checked="purchased"> purchased </n-checkbox>
     </n-space>
 
     <!-- 目录标签页 -->
@@ -66,7 +73,7 @@
             align="center"
             :wrap="false"
           >
-            <n-space>
+            <n-space align="center" @click="onClickResource(row)">
               <div class="poster">
                 <n-image
                   preview-disabled
@@ -77,9 +84,17 @@
                   v-if="row.resource_type === 'VIDEO'"
                   class="icon"
                   size="15"
-                  color="#fff"
+                  color="#999"
                   :component="SmartDisplayFilled"
                 />
+                <div class="mask" v-if="!row.has_permissions">
+                  <n-icon
+                    class="icon"
+                    size="15"
+                    color="#fff"
+                    :component="LockClosedOutline"
+                  />
+                </div>
               </div>
               <div>
                 <div class="name">{{ row.name }}</div>
@@ -104,63 +119,46 @@
             </n-space>
           </n-space>
         </n-tab-pane>
-
-        <!-- <n-tab-pane
-          v-for="item in categoryList"
-          :name="item.name"
-          :tab="item.name"
-          @click="navigateToDetail(item)"
-        >
-          <template v-if="item.type === 0">
-            <n-image
-              v-for="_item in item.items"
-              preview-disabled
-              width="50"
-              class="poster"
-              src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-            />
-          </template>
-          <template v-else-if="item.type === 1">
-            <div class="poster-card-wrap">
-              <video controls>
-                <source
-                  src="https://www.runoob.com/try/demo_source/movie.mp4"
-                  type="video/mp4"
-                />
-                您的浏览器不支持Video标签。
-              </video>
-              <div class="info-wrap">
-                <div class="name">Mario.mp4</div>
-                <div class="time">15:30:25 | 2.43M</div>
-                <div class="like">
-                  <n-icon
-                    size="20"
-                    v-if="item.isLike.value"
-                    color="red"
-                    @click="unlike(item)"
-                  >
-                    <Heart />
-                  </n-icon>
-                  <n-icon size="20" v-else @click="like(item)">
-                    <HeartOutline />
-                  </n-icon>
-                  <div>1988</div>
-                </div>
-              </div>
-            </div>
-          </template>
-          <template v-else-if="item.type === 2">
-            <n-image
-              v-for="_item in item.items"
-              preview-disabled
-              width="50"
-              class="poster"
-              src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-            />
-          </template>
-        </n-tab-pane> -->
       </n-tabs>
     </div>
+
+    <!-- 激活码弹窗 -->
+    <n-modal v-model:show="showModal">
+      <div class="modal-wrap" :style="modalStyle">
+        <n-space align="center">
+          <n-icon
+            :component="ChevronBack"
+            color="#fff"
+            size="20"
+            style="vertical-align: middle"
+            @click="showModal = false"
+          />
+          <div>{{ selectedResource.name }}</div>
+        </n-space>
+        <n-space :style="modalContentStyle" vertical justify="center">
+          <div>无权查看</div>
+          <div>请输入激活码或联系客服购买，联系方式（tg）：XXXXX</div>
+          <n-space vertical style="margin-top: 30px">
+            <n-button
+              color="rgb(237, 56, 56)"
+              style="width: 100%"
+              @click="goToActivationPage"
+            >
+              输入激活码
+            </n-button>
+            <n-button
+              id="ttt"
+              color="#fff"
+              style="width: 100%; color: #000"
+              :data-clipboard-text="contactPhone"
+              @click="copyContact"
+            >
+              复制联系方式
+            </n-button>
+          </n-space>
+        </n-space>
+      </div>
+    </n-modal>
   </div>
 </template>
 
@@ -179,13 +177,18 @@ import {
   NGi,
   NStatistic,
   NSpace,
+  NCheckbox,
+  NModal,
+  NCard,
+  NButton,
 } from 'naive-ui';
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
 import { stringify } from 'qs';
 import { Heart, HeartOutline } from '@vicons/ionicons5';
-import { postLike, deleteLike } from '@/api/like';
+import { postLike, deleteLike, getLikeList } from '@/api/like';
 import { getResourceList } from '@/api/resource';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
+import { LockClosedOutline, ChevronBack } from '@vicons/ionicons5';
 import { SmartDisplayFilled } from '@vicons/material';
 import {
   DIR_VIDEOS_KEY,
@@ -202,39 +205,88 @@ import {
   DIR_MY_FAVORITE_KEY,
   parseUrlToPath,
   formatDate,
+  filterTableMater,
 } from '@/common/global';
 import PageHeader from '@/components/m/PageHeader';
 import { getCategorieList } from '@/api/categories';
 import { useStore } from 'vuex';
+import Clipboard from 'clipboard';
 
 const store = useStore();
 const route = useRoute();
 const router = useRouter();
 
 // 头部导航
-const title = route.query.name;
+const title = ref(null);
 
 function goBack() {
   router.push('/m/resource');
 }
 
 // 子分区列表
-const category = route.query.category_id;
+const category = ref(null);
 const categoryList = ref([]);
 
 async function renderCategoryList() {
+  const res = await getCategorieList();
+  const dataList = filterTableMater(parseInt(category.value), res.items || []);
   // TODO: mock picture_url
-  const a = store.state.selectedCategory.items.map((item) => {
+  const a = dataList.items.map((item) => {
     return {
       ...item,
       picture_url: 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg',
     };
   });
   categoryList.value = a;
-  // categoryList.value = store.state.selectedCategory.items;
+  // categoryList.value = dataList.items;
 }
 
-renderCategoryList();
+const isFromSearch = ref(false);
+const isFromFavorite = ref(false);
+
+function init() {
+  if (route.query.isFromSearch) {
+    isFromSearch.value = true;
+  } else if (route.query.isFromFavorite) {
+    title.value =
+      route.query.category_id === DIR_FAVORITE_KEY
+        ? 'Most favorite'
+        : 'My favorite';
+    categoryList.value = [];
+    resourceList.value = [];
+    isFromFavorite.value = true;
+    renderFavoriteList().then(() => setTabHeight());
+  } else {
+    title.value = route.query.name;
+    category.value = route.query.category_id;
+    categoryList.value = [];
+    resourceList.value = [];
+    isFromSearch.value = false;
+    isFromFavorite.value = false;
+    renderCategoryList().then(() => setTabHeight());
+    renderResourceList();
+  }
+}
+
+function setTabHeight() {
+  tabHeight.value =
+    document.body.offsetHeight - (categoryList.value.length ? 220 : 140) + 'px';
+}
+
+const order_by = ref('');
+
+const likeParams = reactive({
+  page_num: 1,
+  page_size: 10,
+  resource_type: 'VIDEO',
+  order_by: '',
+});
+
+async function renderFavoriteList() {
+  const res = await getLikeList(likeParams);
+  const dataList = (res.likes || []).map((item) => item.resource);
+  resourceList.value = dataList;
+}
 // const tabs = ref(null);
 // const dataList = ref(null);
 // const categoryParams = reactive({
@@ -249,7 +301,6 @@ renderCategoryList();
 // renderTabs();
 
 // 排序标签
-const sort = ref(DEFAULT_SORT_KEY);
 const tags = [
   {
     key: DEFAULT_SORT_KEY,
@@ -260,9 +311,20 @@ const tags = [
     label: POPULAR_SORT_LABEL,
   },
 ];
-function onTagChecked(item) {
-  if (item.key !== sort.value) {
-    sort.value = item.key;
+const purchased = ref(false);
+
+function onSortChange(item) {
+  if (item.key !== order_by.value) {
+    order_by.value = item.key;
+    if (isFavorite) {
+      resourceList.value = [];
+      likeParams.order_by = item.key;
+      renderFavoriteList();
+    } else {
+      resourceList.value = [];
+      query.order_by = item.key;
+      renderResourceList();
+    }
   }
 }
 
@@ -274,18 +336,43 @@ const tabs = [
 const tabHeight = ref(0);
 
 const showChildCategory = computed(() => {
-  return category != DIR_MY_FAVORITE_KEY && category != DIR_FAVORITE_KEY;
+  return (
+    category.value != DIR_MY_FAVORITE_KEY && category.value != DIR_FAVORITE_KEY
+  );
 });
+
+const isFavorite = [DIR_FAVORITE_KEY, DIR_MY_FAVORITE_KEY].includes(
+  route.query.category_id
+);
 
 function onTabChange(val) {
-  query.resource_type = val;
-  renderResourceList();
+  resourceList.value = [];
+  if (isFavorite) {
+    likeParams.resource_type = val;
+    renderFavoriteList();
+  } else {
+    query.resource_type = val;
+    renderResourceList();
+  }
 }
 
-onMounted(() => {
-  tabHeight.value =
-    document.body.offsetHeight - (showChildCategory.value ? 220 : 130) + 'px';
-});
+let timer = null;
+
+function search() {
+  if (timer) {
+    clearTimeout(timer);
+  }
+  timer = setTimeout(() => {
+    query.category_id = route.query.category_id || 0;
+    tabHeight.value = document.body.offsetHeight - 130 + 'px';
+    renderResourceList();
+  }, 300);
+}
+
+// onMounted(() => {
+//   tabHeight.value =
+//     document.body.offsetHeight - (categoryList.value.length ? 220 : 130) + 'px';
+// });
 
 // 资源列表
 
@@ -306,9 +393,9 @@ const resourceList = ref(null);
 const query = reactive({
   page_size: 10,
   page_num: 1,
-  category_id: category,
+  category_id: category.value,
   key: null,
-  order_by: sort.value,
+  order_by: DEFAULT_SORT_KEY,
   resource_type: 'VIDEO',
   // order_type: '',
 });
@@ -318,7 +405,7 @@ async function renderResourceList() {
   resourceList.value = res.resources || [];
 }
 
-renderResourceList();
+init();
 
 function navigateToDetail(item) {
   router.push({
@@ -326,6 +413,25 @@ function navigateToDetail(item) {
     query: {
       list: stringify(item),
     },
+  });
+}
+
+watch(
+  () => route.query,
+  (val) => {
+    init();
+  }
+);
+
+function navigateToList(item) {
+  router.push({
+    path: '/m/resource/list',
+    query: item.items
+      ? {
+          category_id: item.id,
+          name: item.name,
+        }
+      : { isFromSearch: true, category_id: route.query.category_id },
   });
 }
 
@@ -339,10 +445,67 @@ async function like(item) {
 }
 
 async function unlike(item) {
-  await deleteLike({
-    resource_id: item.id,
+  try {
+    await deleteLike({
+      resource_id: item.id,
+    });
+    item.like_time = 0;
+  } catch (e) {}
+}
+
+// 激活码弹窗
+const selectedResource = ref(null);
+const showModal = ref(false);
+const modalStyle = {
+  width: '100%',
+  height: document.body.offsetHeight + 'px',
+  padding: '10px',
+  backgroundColor: 'rgb(51,51,51)',
+  color: '#fff',
+  textAlign: 'center',
+  boxSizing: 'border-box',
+};
+const modalContentStyle = {
+  width: '70%',
+  margin: '30% auto 0',
+};
+const contactPhone = 'xxxx';
+let clipboard = null;
+
+function onClickResource(row) {
+  selectedResource.value = row;
+  if (row.has_permissions) {
+    navigateToDetail(row);
+  } else {
+    showModal.value = true;
+  }
+}
+function goToActivationPage() {
+  router.push('/m/activation');
+}
+function copyContact() {
+  initClipboard();
+  clipboard.on('success', (e) => {
+    console.log('copy succ');
+    e.clearSelection();
+  });
+  clipboard.on('error', (e) => {
+    console.log('copy fail');
   });
 }
+function initClipboard() {
+  clipboard && clipboard.destroy();
+  clipboard = null;
+  clipboard = new Clipboard('#ttt');
+}
+
+// watch(showModal, (val) => {
+//   if (val) {
+//     setTimeout(() => {
+//       initClipboard();
+//     }, 1000);
+//   }
+// });
 </script>
 
 <style lang="scss" scoped>
@@ -366,6 +529,16 @@ async function unlike(item) {
   //     margin-right: 10px;
   //   }
   // }
+  .search-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    .user {
+      margin-left: 10px;
+      min-width: 34px;
+    }
+  }
   .tabs-wrap {
     flex: 1;
     .poster-card-wrap {
@@ -380,6 +553,21 @@ async function unlike(item) {
           position: absolute;
           bottom: 5px;
           right: 5px;
+        }
+        .mask {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: #666;
+          opacity: 0.7;
+          .icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+          }
         }
       }
       .name {

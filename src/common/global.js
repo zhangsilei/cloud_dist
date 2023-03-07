@@ -91,7 +91,7 @@ export const popularCategoryEnum = createEnum({
 
 export const resourceSortEnum = createEnum({
   DEFAULT: ['', '默认'],
-  POPULAR: ['line_num', '人气'],
+  POPULAR: ['like_num', '人气'],
 });
 
 export function filterTableMater(id, arr) {
@@ -132,7 +132,7 @@ export const DIR_PHOTOS_LABEL = 'Photos';
 
 export const DEFAULT_SORT_KEY = '';
 export const DEFAULT_SORT_LABEL = '默认';
-export const POPULAR_SORT_KEY = 'line_num';
+export const POPULAR_SORT_KEY = 'like_num';
 export const POPULAR_SORT_LABEL = '人气';
 
 export const POPULAR_CATEGORY_KEY = 'popularity';
