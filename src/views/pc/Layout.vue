@@ -151,12 +151,11 @@ export default {
     });
     const formRef = ref(null);
 
-    // const logout = () => {};
-
     const onSelect = (key, opt) => {
       if (key === TYPE_MODPWD) {
         isShowPwdAlert.value = true;
       } else if (key === TYPE_LOGOUT) {
+        logout();
       }
     };
 
@@ -183,10 +182,10 @@ export default {
           label: '修改密码',
           key: TYPE_MODPWD,
         },
-        // {
-        //   label: '退出登录',
-        //   key: TYPE_LOGOUT,
-        // },
+        {
+          label: '退出登录',
+          key: TYPE_LOGOUT,
+        },
       ];
       return commonOpts;
     })();

@@ -63,6 +63,7 @@ import {
   POPULAR_CATEGORY_KEY,
   POPULAR_CATEGORY_VALUE,
   parseUrlToPath,
+  favoriteTypeEnum,
 } from '@/common/global';
 import userHeader from '@/assets/header_user.png';
 import myFavorite from '@/assets/my_favorite.png';
@@ -129,13 +130,13 @@ async function renderList() {
   } else {
     dataList.value = [
       {
-        id: DIR_MY_FAVORITE_KEY,
-        name: DIR_MY_FAVORITE_LABEL,
+        id: favoriteTypeEnum.MY_FAVORITE,
+        name: favoriteTypeEnum.getDesc('MY_FAVORITE'),
         picture_url: myFavorite,
       },
       {
-        id: DIR_FAVORITE_KEY,
-        name: DIR_FAVORITE_LABEL,
+        id: favoriteTypeEnum.FAVORITE,
+        name: favoriteTypeEnum.getDesc('FAVORITE'),
         picture_url: favorite,
       },
     ];
@@ -153,7 +154,10 @@ function onFocusSearch() {
 }
 
 function onClickChildCategory(item) {
-  const isFavorite = [DIR_MY_FAVORITE_KEY, DIR_FAVORITE_KEY].includes(item.id);
+  const isFavorite = [
+    favoriteTypeEnum.MY_FAVORITE,
+    favoriteTypeEnum.FAVORITE,
+  ].includes(item.id);
   if (isFavorite) {
     navigateToList({ isFromFavorite: true, category_id: item.id });
   } else {

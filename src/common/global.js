@@ -1,6 +1,7 @@
 import {
   getRole,
   removeRole,
+  removeSelectedCategory,
   removeToken,
   removeUser,
   removeUserId,
@@ -24,6 +25,7 @@ export const logout = () => {
   removeUser();
   removeRole();
   removeUserId();
+  removeSelectedCategory();
   import('@/router').then((module) => {
     module.default.push('/');
   });
@@ -81,8 +83,8 @@ export const resourceTypeEnum = createEnum({
 });
 
 export const favoriteTypeEnum = createEnum({
-  FAVORITE: ['Most_favorite', 'Most favorite'],
-  MY_FAVORITE: ['My_favorite', 'My favorite'],
+  FAVORITE: ['MOST', 'Most favorite'],
+  MY_FAVORITE: ['MY', 'My favorite'],
 });
 
 export const popularCategoryEnum = createEnum({

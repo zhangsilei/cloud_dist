@@ -17,7 +17,7 @@
 
     <!-- 头部导航 -->
     <page-header v-if="!isFromSearch" :title="title" @back="goBack">
-      <template #extra>
+      <template #extra v-if="!isFromFavorite">
         <n-icon
           :component="IosSearch"
           size="20"
@@ -29,7 +29,7 @@
     </page-header>
 
     <!-- 子分区列表 -->
-    <div v-if="showChildCategory && !isFromSearch" class="child-category-list">
+    <div v-if="!isFromFavorite && !isFromSearch" class="child-category-list">
       <div
         class="item"
         v-for="item in categoryList"
@@ -103,7 +103,7 @@
             </n-space>
             <n-space :size="5">
               <n-icon
-                v-if="row.like_time"
+                v-if="row.is_like"
                 size="20"
                 color="red"
                 :component="Heart"
@@ -199,13 +199,10 @@ import {
   DEFAULT_SORT_LABEL,
   POPULAR_SORT_KEY,
   POPULAR_SORT_LABEL,
-  RESOURCE_TYPE_VIDEO,
-  POPULAR_CATEGORY_KEY,
-  DIR_FAVORITE_KEY,
-  DIR_MY_FAVORITE_KEY,
   parseUrlToPath,
   formatDate,
   filterTableMater,
+  favoriteTypeEnum,
 } from '@/common/global';
 import PageHeader from '@/components/m/PageHeader';
 import { getCategorieList } from '@/api/categories';
@@ -248,10 +245,7 @@ function init() {
   if (route.query.isFromSearch) {
     isFromSearch.value = true;
   } else if (route.query.isFromFavorite) {
-    title.value =
-      route.query.category_id === DIR_FAVORITE_KEY
-        ? 'Most favorite'
-        : 'My favorite';
+    title.value = favoriteTypeEnum.getDescFromValue(route.query.category_id);
     categoryList.value = [];
     resourceList.value = [];
     isFromFavorite.value = true;
@@ -279,12 +273,17 @@ const likeParams = reactive({
   page_num: 1,
   page_size: 10,
   resource_type: 'VIDEO',
-  order_by: '',
+  favorite_type: route.query.category_id,
 });
 
 async function renderFavoriteList() {
   const res = await getLikeList(likeParams);
-  const dataList = (res.likes || []).map((item) => item.resource);
+  const dataList = (res.likes || []).map((item) => {
+    return {
+      ...item.resource,
+      has_permissions: item.has_permissions,
+    };
+  });
   resourceList.value = dataList;
 }
 // const tabs = ref(null);
@@ -301,22 +300,32 @@ async function renderFavoriteList() {
 // renderTabs();
 
 // 排序标签
-const tags = [
-  {
+let tags = ref([]);
+
+if (route.query.isFromFavorite) {
+  tags.value.push({
     key: DEFAULT_SORT_KEY,
     label: DEFAULT_SORT_LABEL,
-  },
-  {
-    key: POPULAR_SORT_KEY,
-    label: POPULAR_SORT_LABEL,
-  },
-];
+  });
+} else {
+  tags.value.push(
+    {
+      key: DEFAULT_SORT_KEY,
+      label: DEFAULT_SORT_LABEL,
+    },
+    {
+      key: POPULAR_SORT_KEY,
+      label: POPULAR_SORT_LABEL,
+    }
+  );
+}
+
 const purchased = ref(false);
 
 function onSortChange(item) {
   if (item.key !== order_by.value) {
     order_by.value = item.key;
-    if (isFavorite) {
+    if (route.query.isFromFavorite) {
       resourceList.value = [];
       likeParams.order_by = item.key;
       renderFavoriteList();
@@ -335,19 +344,20 @@ const tabs = [
 ];
 const tabHeight = ref(0);
 
-const showChildCategory = computed(() => {
-  return (
-    category.value != DIR_MY_FAVORITE_KEY && category.value != DIR_FAVORITE_KEY
-  );
-});
+// const showChildCategory = computed(() => {
+//   return (
+//     category.value != DIR_MY_FAVORITE_KEY && category.value != DIR_FAVORITE_KEY
+//   );
+// });
 
-const isFavorite = [DIR_FAVORITE_KEY, DIR_MY_FAVORITE_KEY].includes(
-  route.query.category_id
-);
+// const isFavorite = [
+//   favoriteTypeEnum.MY_FAVORITE,
+//   favoriteTypeEnum.FAVORITE,
+// ].includes(route.query.category_id);
 
 function onTabChange(val) {
   resourceList.value = [];
-  if (isFavorite) {
+  if (route.query.isFromFavorite) {
     likeParams.resource_type = val;
     renderFavoriteList();
   } else {
@@ -436,21 +446,27 @@ function navigateToList(item) {
 }
 
 async function like(item) {
-  try {
-    await postLike({
-      resource_id: item.id,
-    });
-    item.like_time = 1;
-  } catch (e) {}
+  if (!item.is_like) {
+    try {
+      await postLike({
+        resource_id: item.id,
+      });
+      item.is_like = true;
+      item.like_num++;
+    } catch (e) {}
+  }
 }
 
 async function unlike(item) {
-  try {
-    await deleteLike({
-      resource_id: item.id,
-    });
-    item.like_time = 0;
-  } catch (e) {}
+  if (item.is_like) {
+    try {
+      await deleteLike({
+        resource_id: item.id,
+      });
+      item.is_like = false;
+      item.like_num--;
+    } catch (e) {}
+  }
 }
 
 // 激活码弹窗
@@ -480,19 +496,23 @@ function onClickResource(row) {
     showModal.value = true;
   }
 }
+
 function goToActivationPage() {
   router.push('/m/activation');
 }
+
 function copyContact() {
   initClipboard();
   clipboard.on('success', (e) => {
     console.log('copy succ');
     e.clearSelection();
+    showModal.value = false;
   });
   clipboard.on('error', (e) => {
     console.log('copy fail');
   });
 }
+
 function initClipboard() {
   clipboard && clipboard.destroy();
   clipboard = null;

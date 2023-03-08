@@ -6,7 +6,7 @@
         <div>返回</div>
       </div>
 
-      <n-breadcrumb separator=">">
+      <n-breadcrumb separator=">" style="padding: 0">
         <n-breadcrumb-item v-for="(item, index) in breadcrumbCategory">
           {{ item }}
         </n-breadcrumb-item>
@@ -44,6 +44,7 @@
           size="small"
           round
           :color="isPorpular ? activeStyle : undefined"
+          style="cursor: pointer"
           @click="sort(SORT_TYPE_POPULAR)"
         >
           人气
@@ -198,9 +199,11 @@ const state = reactive({
   },
 });
 
-function onClickDir(item) {
+async function onClickDir(item) {
   state.query.resource_type = item.value;
-  renderFavorite();
+  await renderFavorite();
+  isShowResource.value = true;
+  isShowDir.value = false;
 }
 
 async function renderResources() {
@@ -309,7 +312,15 @@ async function renderFavorite() {
     page_num: state.query.page_num,
     page_size: state.query.page_size,
     resource_type: state.query.resource_type,
+    favorite_type: store.state.selectedCategory.id,
   });
+  const dataList = (res.likes || []).map((item) => {
+    return {
+      ...item.resource,
+      has_permissions: item.has_permissions,
+    };
+  });
+  state.dataList = dataList;
 }
 
 const detail = reactive({
@@ -363,6 +374,7 @@ function goToDetailPage(item) {
       display: flex;
       align-items: center;
       margin-right: 20px;
+      min-width: 50px;
     }
   }
   .sort {
@@ -377,18 +389,5 @@ function goToDetailPage(item) {
   .content {
     margin-top: 10px;
   }
-}
-</style>
-
-<style lang="scss">
-.n-breadcrumb {
-  padding: 0;
-  margin-right: 50px;
-}
-.n-input {
-  max-width: 300px;
-}
-.n-tag {
-  cursor: pointer;
 }
 </style>

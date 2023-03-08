@@ -95,6 +95,7 @@ import {
   favoriteTypeEnum,
 } from '@/common/global';
 import { useStore } from 'vuex';
+import { getSelectedCategory } from '@/common/cookie';
 
 const store = useStore();
 const { message } = createDiscreteApi(['message']);
@@ -162,9 +163,13 @@ async function renderTree() {
   }
   dataList.value = items;
   if (dataList.value.length) {
-    defaultSelectedKeys.push(dataList.value[0].id);
-    defaultExpandedKeys.push(dataList.value[0].id);
-    store.commit('SET_SELECTED_CATEGORY', dataList.value[0]);
+    const localCategory = getSelectedCategory();
+    const defaultCategory = localCategory || dataList.value[0];
+
+    defaultSelectedKeys.push(defaultCategory.id);
+    // defaultExpandedKeys.push('popularity');
+    defaultExpandedKeys.push(defaultCategory.id);
+    store.commit('SET_SELECTED_CATEGORY', defaultCategory);
     store.commit('SET_ALL_CATEGORIES', dataList.value);
   }
 }

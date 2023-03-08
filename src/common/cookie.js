@@ -4,6 +4,7 @@ const TOKEN_KEY = 'Admin-Token';
 const ROLE_KEY = 'role';
 const USER_KEY = 'user';
 const USER_ID = 'uid';
+const SELECTED_CATEGORY_ID = 'Selected-Category';
 
 export function getToken() {
   return Cookies.get(TOKEN_KEY);
@@ -51,4 +52,16 @@ export function setUserId(uid) {
 
 export function removeUserId() {
   return Cookies.remove(USER_ID);
+}
+
+export function getSelectedCategory() {
+  return JSON.parse(Cookies.get(SELECTED_CATEGORY_ID));
+}
+
+export function setSelectedCategory(selectedCategory) {
+  return Cookies.set(SELECTED_CATEGORY_ID, JSON.stringify(selectedCategory));
+}
+
+export function removeSelectedCategory() {
+  return Cookies.remove(SELECTED_CATEGORY_ID);
 }

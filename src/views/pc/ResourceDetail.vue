@@ -34,7 +34,8 @@
             </video>
           </template>
           <template v-else>
-            <n-image :src="parseUrlToPath(item.picture_url)" lazy />
+            <img :src="parseUrlToPath(item.picture_url)" style="height: 100%">
+            <!-- <n-image :src="parseUrlToPath(item.picture_url)" lazy /> -->
           </template>
         </swiper-slide>
       </swiper>
