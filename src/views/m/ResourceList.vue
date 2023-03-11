@@ -54,7 +54,7 @@
           {{ item.label }}
         </n-tag>
       </div>
-      <n-checkbox v-model:checked="purchased"> purchased </n-checkbox>
+      <!-- <n-checkbox v-model:checked="purchased"> purchased </n-checkbox> -->
     </n-space>
 
     <!-- 目录标签页 -->
@@ -67,13 +67,13 @@
       >
         <n-tab-pane v-for="item in tabs" :name="item.key" :tab="item.label">
           <n-space
-            v-for="row in resourceList"
+            v-for="(row, index) in resourceList"
             class="poster-card-wrap"
             justify="space-between"
             align="center"
             :wrap="false"
           >
-            <n-space align="center" @click="onClickResource(row)">
+            <n-space align="center" @click="onClickResource(row, index)">
               <div class="poster">
                 <n-image
                   preview-disabled
@@ -123,7 +123,7 @@
     </div>
 
     <!-- 激活码弹窗 -->
-    <n-modal v-model:show="showModal">
+    <n-modal v-model:show="showModal" :auto-focus="false">
       <div class="modal-wrap" :style="modalStyle">
         <n-space align="center">
           <n-icon
@@ -147,7 +147,7 @@
               输入激活码
             </n-button>
             <n-button
-              id="ttt"
+              :id="copyBtnId"
               color="#fff"
               style="width: 100%; color: #000"
               :data-clipboard-text="contactPhone"
@@ -282,9 +282,11 @@ async function renderFavoriteList() {
     return {
       ...item.resource,
       has_permissions: item.has_permissions,
+      // has_permissions: true, // TODO:mock
     };
   });
   resourceList.value = dataList;
+  total.value = res.total;
 }
 // const tabs = ref(null);
 // const dataList = ref(null);
@@ -400,6 +402,7 @@ function search() {
 // const activeStyle = { textColor: '#ed3939', borderColor: '#ed3939' };
 
 const resourceList = ref(null);
+const total = ref(0);
 const query = reactive({
   page_size: 10,
   page_num: 1,
@@ -412,7 +415,16 @@ const query = reactive({
 
 async function renderResourceList() {
   const res = await getResourceList(query);
-  resourceList.value = res.resources || [];
+  // TODO: mock
+  const aa = res.resources.map((item) => {
+    return {
+      ...item,
+      has_permissions: true,
+    };
+  });
+  resourceList.value = aa;
+  // resourceList.value = res.resources || [];
+  total.value = res.total;
 }
 
 init();
@@ -421,7 +433,10 @@ function navigateToDetail(item) {
   router.push({
     path: '/m/resource/detail',
     query: {
-      list: stringify(item),
+      ...item,
+      ...(route.query.isFromFavorite ? likeParams : query),
+      total: total.value,
+      isFromFavorite: route.query.isFromFavorite,
     },
   });
 }
@@ -483,15 +498,16 @@ const modalStyle = {
 };
 const modalContentStyle = {
   width: '70%',
-  margin: '30% auto 0',
+  margin: '17% auto 0',
 };
 const contactPhone = 'xxxx';
+const copyBtnId = 'copyBtn';
 let clipboard = null;
 
-function onClickResource(row) {
+function onClickResource(row, index) {
   selectedResource.value = row;
   if (row.has_permissions) {
-    navigateToDetail(row);
+    navigateToDetail(row, index);
   } else {
     showModal.value = true;
   }
@@ -516,16 +532,10 @@ function copyContact() {
 function initClipboard() {
   clipboard && clipboard.destroy();
   clipboard = null;
-  clipboard = new Clipboard('#ttt');
+  clipboard = new Clipboard(`#${copyBtnId}`, {
+    container: document.querySelector(`#${copyBtnId}`),
+  });
 }
-
-// watch(showModal, (val) => {
-//   if (val) {
-//     setTimeout(() => {
-//       initClipboard();
-//     }, 1000);
-//   }
-// });
 </script>
 
 <style lang="scss" scoped>

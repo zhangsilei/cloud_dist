@@ -55,7 +55,7 @@ export function removeUserId() {
 }
 
 export function getSelectedCategory() {
-  return JSON.parse(Cookies.get(SELECTED_CATEGORY_ID));
+  return JSON.parse(Cookies.get(SELECTED_CATEGORY_ID) || null);
 }
 
 export function setSelectedCategory(selectedCategory) {

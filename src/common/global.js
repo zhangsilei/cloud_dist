@@ -105,14 +105,24 @@ export function filterTableMater(id, arr) {
   }
 }
 
-export function getBreadcrumbCategory(arr, id, result = []) {
+export function getCategoryChain(arr, id, result = []) {
   const re = filterTableMater(id, arr);
   if (!re) return result;
-  result.unshift(re.name);
+  result.unshift(re);
   if (re.parent_category_id) {
-    return getBreadcrumbCategory(arr, re.parent_category_id, result);
+    return getCategoryChain(arr, re.parent_category_id, result);
   }
   return result;
+}
+
+export function getBreadcrumbCategory(allCategories, category_id) {
+  const chain = getCategoryChain(allCategories, category_id);
+  return chain.map((item) => item.name);
+}
+
+export function getDefaultExpandedKeys(allCategories, category_id) {
+  const chain = getCategoryChain(allCategories, category_id);
+  return chain.map((item) => item.id);
 }
 
 export function formatDate(second, format) {

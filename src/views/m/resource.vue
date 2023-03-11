@@ -23,23 +23,46 @@
       </n-tag>
     </div>
     <!-- 子分类列表 -->
-    <n-spin class="list-wrap" :show="loading">
-      <n-grid x-gap="12" y-gap="12" :cols="4">
-        <n-gi v-for="item in dataList" @click="onClickChildCategory(item)">
-          <img class="poster" :src="parseUrlToPath(item.picture_url)" />
-          <div>
-            <n-ellipsis style="max-width: 75px">
-              {{ item.name }}
-            </n-ellipsis>
-          </div>
-        </n-gi>
-      </n-grid>
-    </n-spin>
+    <template v-if="selectedTag">
+      <n-spin
+        v-if="selectedTag.has_permissions"
+        class="list-wrap"
+        :show="loading"
+      >
+        <n-grid x-gap="12" y-gap="12" :cols="4">
+          <n-gi v-for="item in dataList" @click="onClickChildCategory(item)">
+            <img class="poster" :src="parseUrlToPath(item.picture_url)" />
+            <div>
+              <n-ellipsis style="max-width: 75px">
+                {{ item.name }}
+              </n-ellipsis>
+            </div>
+          </n-gi>
+        </n-grid>
+      </n-spin>
+      <div v-else>
+        <div>
+          <n-button color="rgb(237, 56, 56)" @click="goToActivationPage">
+            输入激活码
+          </n-button>
+          <n-button
+            :data-clipboard-text="contactPhone"
+            :id="copyBtnId"
+            style="margin-left: 15px"
+            @click="copyContact"
+          >
+            联系客服
+          </n-button>
+        </div>
+        <div v-html="selectedTag.description" style="margin-top: 15px"></div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import {
+  createDiscreteApi,
   NTag,
   NInput,
   NAvatar,
@@ -49,6 +72,7 @@ import {
   NGi,
   NSpin,
   NEllipsis,
+  NButton,
 } from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
 import { ref, reactive, watch } from 'vue';
@@ -69,9 +93,11 @@ import userHeader from '@/assets/header_user.png';
 import myFavorite from '@/assets/my_favorite.png';
 import favorite from '@/assets/my_favorite.png';
 import { useStore } from 'vuex';
+import Clipboard from 'clipboard';
 
 const store = useStore();
 const router = useRouter();
+const { message } = createDiscreteApi(['message']);
 
 // 头部搜索
 function navigateToUser() {
@@ -90,6 +116,7 @@ async function renderTags() {
   dataList.unshift({
     id: POPULAR_CATEGORY_KEY,
     name: POPULAR_CATEGORY_VALUE,
+    has_permissions: true,
   });
   tags.value = dataList;
   selectedTag.value = dataList[0] || {};
@@ -110,6 +137,29 @@ const dataListParams = reactive({
   page_size: 10,
   category_id: null,
 });
+const contactPhone = 'xxxx';
+const copyBtnId = 'copyBtn';
+let clipboard = null;
+
+function copyContact() {
+  initClipboard();
+  clipboard.on('success', (e) => {
+    console.log('copy succ');
+    e.clearSelection();
+    message.success('已复制联系方式');
+  });
+  clipboard.on('error', (e) => {
+    console.log('copy fail');
+  });
+}
+
+function initClipboard() {
+  clipboard && clipboard.destroy();
+  clipboard = null;
+  clipboard = new Clipboard(`#${copyBtnId}`, {
+    container: document.querySelector(`#${copyBtnId}`),
+  });
+}
 
 async function renderList() {
   loading.value = true;
@@ -170,6 +220,10 @@ function navigateToList(query) {
     path: '/m/resource/list',
     query,
   });
+}
+
+function goToActivationPage() {
+  router.push('/m/activation');
 }
 </script>
 

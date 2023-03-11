@@ -1,10 +1,5 @@
 <template>
   <div class="categorie-tree-container">
-    <!-- <n-menu
-      v-model:value="activeKey"
-      :options="menuOptions"
-      style="text-align: left"
-    /> -->
     <n-spin :show="loading">
       <n-space v-if="dataList && dataList.length" vertical :size="12">
         <n-input v-if="isAdmin()" v-model:value="pattern" placeholder="搜索" />
@@ -50,7 +45,12 @@
           <n-input v-model:value="categorie.formData.name" />
         </n-form-item>
         <n-form-item label="分区描述" path="description">
-          <n-input v-model:value="categorie.formData.description" />
+          <editor
+            v-if="!selectedRow.parent_category_id"
+            :html="categorie.formData.description"
+            @onChange="onEditorChange"
+          />
+          <n-input v-else v-model:value="categorie.formData.description" />
         </n-form-item>
         <n-form-item label="排序" path="seq">
           <n-input
@@ -93,9 +93,11 @@ import {
   resourceTypeEnum,
   popularCategoryEnum,
   favoriteTypeEnum,
+  getDefaultExpandedKeys,
 } from '@/common/global';
 import { useStore } from 'vuex';
 import { getSelectedCategory } from '@/common/cookie';
+import Editor from '@/components/pc/Editor';
 
 const store = useStore();
 const { message } = createDiscreteApi(['message']);
@@ -122,55 +124,71 @@ async function renderTree() {
   const res = await getCategorieList();
   const items = res.items || [];
   loading.value = false;
-  // // 在一级分区下插入Favorite、My favorite目录
-  // if (isUser()) {
-  //   (res.items || []).forEach((item, index) => {
-  //     if (item.items) {
-  //       res.items[index].items.unshift({
-  //         id: FAVORITE_DIR_KEY + item.id,
-  //         name: 'My favorite',
-  //         category_id: item.id,
-  //         dirType: FAVORITE_DIR_KEY,
-  //         items: null,
-  //       });
-  //       res.items[index].items.unshift({
-  //         id: MY_FAVORITE_DIR_KEY + item.id,
-  //         name: 'Favorite',
-  //         category_id: item.id,
-  //         dirType: MY_FAVORITE_DIR_KEY,
-  //         items: null,
-  //       });
-  //     }
-  //   });
-  // }
-
   // 默认popular为第一个一级分区
   if (isUser()) {
     items.unshift({
       id: popularCategoryEnum.POPULAR,
-      name: popularCategoryEnum.getDescFromValue(popularCategoryEnum.POPULAR),
+      name: popularCategoryEnum.getDesc('POPULAR'),
+      parent_category_id: 0,
       items: [
         {
           id: favoriteTypeEnum.MY_FAVORITE,
-          name: favoriteTypeEnum.getDescFromValue(favoriteTypeEnum.MY_FAVORITE),
+          name: favoriteTypeEnum.getDesc('MY_FAVORITE'),
+          parent_category_id: popularCategoryEnum.POPULAR,
         },
         {
           id: favoriteTypeEnum.FAVORITE,
-          name: favoriteTypeEnum.getDescFromValue(favoriteTypeEnum.FAVORITE),
+          name: favoriteTypeEnum.getDesc('FAVORITE'),
+          parent_category_id: popularCategoryEnum.POPULAR,
         },
       ],
     });
   }
+  // 为每个非一级分区插入Videos、Photos标签
+  function insertDir(categoryList) {
+    const photosDesc = resourceTypeEnum.getDesc('PHOTOS');
+    const videosDesc = resourceTypeEnum.getDesc('VIDEOS');
+
+    for (let i = 0; i < categoryList.length; i++) {
+      const item = categoryList[i];
+      const isNotFirstLevel = item.parent_category_id;
+      const isNotPopular =
+        item.parent_category_id !== popularCategoryEnum.POPULAR;
+
+      if (item.items && item.items instanceof Array) {
+        if (isNotFirstLevel && isNotPopular) {
+          item.items.unshift({
+            id: photosDesc + item.id,
+            name: photosDesc,
+            category_id: item.id,
+            dirType: resourceTypeEnum.PHOTOS,
+            parent_category_id: item.id,
+          });
+          item.items.unshift({
+            id: videosDesc + item.id,
+            name: videosDesc,
+            category_id: item.id,
+            dirType: resourceTypeEnum.VIDEOS,
+            parent_category_id: item.id,
+          });
+        }
+        insertDir(item.items);
+      }
+    }
+  }
+  insertDir(items);
+
   dataList.value = items;
-  if (dataList.value.length) {
+  if (items.length) {
     const localCategory = getSelectedCategory();
-    const defaultCategory = localCategory || dataList.value[0];
+    const defaultCategory = localCategory || items[0];
+    const categoryChain = getDefaultExpandedKeys(items, defaultCategory.id);
 
     defaultSelectedKeys.push(defaultCategory.id);
-    // defaultExpandedKeys.push('popularity');
-    defaultExpandedKeys.push(defaultCategory.id);
+    categoryChain.forEach((item) => defaultExpandedKeys.push(item));
+    // defaultExpandedKeys.push(defaultCategory.id);
     store.commit('SET_SELECTED_CATEGORY', defaultCategory);
-    store.commit('SET_ALL_CATEGORIES', dataList.value);
+    store.commit('SET_ALL_CATEGORIES', items);
   }
 }
 
@@ -346,30 +364,36 @@ function onSelectHandle(keys, option, meta) {
   store.commit('SET_SELECTED_CATEGORY', meta.node);
 }
 
-function onExpandedHandle(keys, option, meta) {
-  if (meta.action === 'filter') return;
-
-  const hasDir = meta.node.items.some((item) => item.dirType);
-  const photosDesc = resourceTypeEnum.getDescFromValue(resourceTypeEnum.PHOTOS);
-  const videosDesc = resourceTypeEnum.getDescFromValue(resourceTypeEnum.VIDEOS);
-
-  if (!hasDir && meta.node.parent_category_id) {
-    meta.node.items.unshift({
-      id: photosDesc + meta.node.id,
-      name: photosDesc,
-      category_id: meta.node.id,
-      dirType: resourceTypeEnum.PHOTOS,
-      items: null,
-    });
-    meta.node.items.unshift({
-      id: videosDesc + meta.node.id,
-      name: videosDesc,
-      category_id: meta.node.id,
-      dirType: resourceTypeEnum.VIDEOS,
-      items: null,
-    });
-  }
+function onEditorChange(html) {
+  categorie.formData.description = html;
 }
+
+// function onExpandedHandle(keys, option, meta) {
+//   if (meta.action === 'filter') return;
+
+//   const hasDir = meta.node.items.some((item) => item.dirType);
+//   const photosDesc = resourceTypeEnum.getDescFromValue(resourceTypeEnum.PHOTOS);
+//   const videosDesc = resourceTypeEnum.getDescFromValue(resourceTypeEnum.VIDEOS);
+
+//   if (!hasDir && meta.node.parent_category_id) {
+//     meta.node.items.unshift({
+//       id: photosDesc + meta.node.id,
+//       name: photosDesc,
+//       category_id: meta.node.id,
+//       dirType: resourceTypeEnum.PHOTOS,
+//       items: null,
+//       parent_category_id: meta.node.id,
+//     });
+//     meta.node.items.unshift({
+//       id: videosDesc + meta.node.id,
+//       name: videosDesc,
+//       category_id: meta.node.id,
+//       dirType: resourceTypeEnum.VIDEOS,
+//       items: null,
+//       parent_category_id: meta.node.id,
+//     });
+//   }
+// }
 </script>
 
 <style lang="scss" scoped>
@@ -377,175 +401,3 @@ function onExpandedHandle(keys, option, meta) {
   text-align: left;
 }
 </style>
-
-<!-- <script>
-import { h, ref } from 'vue';
-import { NMenu, NIcon, NDropdown } from 'naive-ui';
-import { RouterLink } from 'vue-router';
-import { EllipsisHorizontalSharp } from '@vicons/ionicons5';
-import { isAdmin , onlyAllowNumber, isUser} from '@/common/global';
-import { getCategorieList , updateCategorie, deleteCategorie} from '@/api/categories';
-
-function renderIcon(icon) {
-  return () => h(NIcon, null, { default: () => h(icon) });
-}
-
-export default {
-  components: { NMenu, NDropdown },
-  name: 'CategorieTree',
-  async setup() {
-    const res = await getCategorieList();
-    // const menuOptions = res.item
-
-    return {
-      activeKey: ref(null),
-      menuOptions: [
-        {
-          label: () =>
-            h('div', { class: 'nav-item' }, [
-              h('div', null, 'Game'),
-              isAdmin()
-                ? h(
-                    NDropdown,
-                    {
-                      placement: 'bottom-start',
-                      options: [
-                        {
-                          label: '新建分区',
-                          key: '1',
-                        },
-                        {
-                          label: '新建下级分区',
-                          key: '2',
-                        },
-                        {
-                          label: '编辑',
-                          key: '3',
-                        },
-                      ],
-                    },
-                    renderIcon(EllipsisHorizontalSharp)
-                  )
-                : null,
-            ]),
-          key: 'Game',
-          children: [
-            {
-              label: 'Mobile game',
-              key: 'Mobile game',
-              children: [
-                {
-                  label: 'game1',
-                  key: 'game1',
-                  children: [
-                    {
-                      label: 'xxxx',
-                      key: 'xxxx',
-                      children: [
-                        {
-                          label: 'aaaaa',
-                          key: 'aaaaa',
-                          children: [
-                            {
-                              label: 'bbbb',
-                              key: 'bbbb',
-                            },
-                            {
-                              label: 'Favorite',
-                              key: 'Favorite',
-                            },
-                            {
-                              label: 'Videos',
-                              key: 'Videos',
-                            },
-                            {
-                              label: 'Photos',
-                              key: 'Photos',
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                    {
-                      label: 'Favorite',
-                      key: 'Favorite',
-                    },
-                    {
-                      label: 'Videos',
-                      key: 'Videos',
-                    },
-                    {
-                      label: 'Photos',
-                      key: 'Photos',
-                    },
-                  ],
-                },
-                {
-                  label: 'Favorite',
-                  key: 'Favorite',
-                },
-                {
-                  label: 'Videos',
-                  key: 'Videos',
-                },
-                {
-                  label: 'Photos',
-                  key: 'Photos',
-                },
-              ],
-            },
-            {
-              label: 'Favorite',
-              key: 'Favorite',
-            },
-            {
-              label: 'Videos',
-              key: 'Videos',
-            },
-            {
-              label: 'Photos',
-              key: 'Photos',
-            },
-          ],
-        },
-        {
-          label: 'Moutain',
-          key: 'Moutain',
-          children: [],
-        },
-      ],
-    };
-  },
-};
-</script>
-
-<style lang="scss" scoped>
-.categorie-tree-container {
-  background: #fff;
-  border-right: 1px solid #ddd;
-}
-</style>
-
-<style lang="scss">
-.n-menu .n-submenu .n-menu-item-content {
-  display: flex;
-  & > .n-menu-item-content-header {
-    display: flex;
-    order: 2;
-    width: 100%;
-    & > .nav-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-    }
-  }
-  & > .n-menu-item-content__arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    order: 1;
-    margin-right: 15px;
-  }
-}
-</style> -->

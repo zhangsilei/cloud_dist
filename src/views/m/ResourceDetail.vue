@@ -2,57 +2,46 @@
   <div class="resource-detail-container">
     <n-page-header :title="title" @back="handleBack">
       <template #extra>
-        <n-space>
-          <n-icon v-if="currentResource.isLike" color="red" @click="like">
+        <n-space v-if="currentResource">
+          <n-icon
+            v-if="currentResource.is_like"
+            color="red"
+            size="20"
+            @click="unlike"
+          >
             <Heart />
           </n-icon>
-          <n-icon v-else @click="unlike">
+          <n-icon v-else size="20" @click="like">
             <HeartOutline />
           </n-icon>
         </n-space>
       </template>
     </n-page-header>
 
-    <!-- <template v-if="type == 1">
-      <video controls>
-        <source
-          src="https://www.runoob.com/try/demo_source/movie.mp4"
-          type="video/mp4"
-        />
-        您的浏览器不支持Video标签。
-      </video>
-    </template>
-    <template v-else-if="type == 2">
-      <img class="large-img" :src="currentResource.url" />
-    </template> -->
     <swiper
+      v-if="currentResource"
       :direction="'vertical'"
       class="mySwiper"
+      @swiper="onSwiper"
       @slideChange="onSourceChange"
     >
-      <swiper-slide>
-        <img src="https://img95.699pic.com/photo/50008/9194.jpg_wh860.jpg" />
-      </swiper-slide>
-      <swiper-slide>
-        <video controls controlsList="nodownload" autoplay>
-          <source
-            src="https://www.runoob.com/try/demo_source/movie.mp4"
-            type="video/mp4"
+      <swiper-slide v-for="item in dataList">
+        <template v-if="item.resource_type === 'VIDEO'">
+          <video
+            :id="item.name"
+            muted
+            controls
+            controlsList="nodownload"
+            style="width: 100%"
+          ></video>
+        </template>
+        <template v-else>
+          <img
+            :src="parseUrlToPath(item.picture_url)"
+            style="width: auto; height: 100%"
           />
-          您的浏览器不支持Video标签。
-        </video>
-      </swiper-slide>
-      <swiper-slide>
-        <img src="https://img95.699pic.com/photo/50008/9194.jpg_wh860.jpg" />
-      </swiper-slide>
-      <swiper-slide>
-        <video controls controlsList="nodownload">
-          <source
-            src="https://www.runoob.com/try/demo_source/movie.mp4"
-            type="video/mp4"
-          />
-          您的浏览器不支持Video标签。
-        </video>
+          <!-- <n-image :src="parseUrlToPath(item.picture_url)" lazy /> -->
+        </template>
       </swiper-slide>
     </swiper>
   </div>
@@ -73,7 +62,7 @@ import {
   NStatistic,
   NSpace,
 } from 'naive-ui';
-import { computed, ref } from 'vue';
+import { computed, ref, nextTick, watch, onMounted } from 'vue';
 import { Heart, HeartOutline } from '@vicons/ionicons5';
 import { postLike, deleteLike } from '@/api/like';
 import { useRouter, useRoute } from 'vue-router';
@@ -82,40 +71,143 @@ import { parse } from 'qs';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 // Import Swiper styles
 import 'swiper/css';
+import { getResourceList } from '@/api/resource';
+import { getLikeList } from '@/api/like';
+import { parseUrlToPath } from '@/common/global';
+import Hls from 'hls.js';
 
 const router = useRouter();
 const route = useRoute();
 
-let totalNum = 9;
-let currentNum = ref(1);
-const title = computed(() => {
-  return currentNum.value + '/' + totalNum;
-});
-const currentResource = ref(null);
+const queryObj = parse(route.query);
 
-function onSourceChange(swiper) {
-  currentNum.value = swiper.activeIndex + 1;
+const totalNum = ref(0);
+const currentNum = ref(0);
+const currentResource = ref(null);
+const dataList = ref([]);
+const page_num = ref(1);
+
+const title = computed(() => {
+  return currentNum.value + '/' + totalNum.value;
+});
+
+watch(currentResource, (val) => {
+  if (val.resource_type === 'VIDEO') {
+    nextTick(() => {
+      play();
+    });
+  }
+});
+
+init();
+
+async function getData() {
+  if (queryObj.isFromFavorite) {
+    await getLikes();
+  } else {
+    await getResources();
+  }
 }
 
-const queryObj = parse(route.query);
-queryObj.list = parse(queryObj.list);
-currentResource.value = queryObj.list.items[0];
-const type = queryObj.list.type;
+async function init() {
+  await getData();
+  if (page_num.value < queryObj.page_num) {
+    page_num.value++;
+    await init();
+    return;
+  }
+  setCurrentData();
+}
+
+function setCurrentData() {
+  let currentPageNum = 0;
+  dataList.value.find((item, index) => {
+    if (item.id == queryObj.id) {
+      currentResource.value = item;
+      currentPageNum = index + 1;
+    }
+  });
+  totalNum.value = queryObj.total;
+  currentNum.value =
+    (queryObj.page_num - 1) * queryObj.page_size + currentPageNum;
+}
+
+async function getResources() {
+  const res = await getResourceList({
+    page_num: page_num.value,
+    page_size: queryObj.page_size,
+    resource_type: queryObj.resource_type,
+    category_id: queryObj.category_id,
+    order_by: queryObj.order_by,
+    key: queryObj.key,
+  });
+  dataList.value.push(...(res.resources || []));
+}
+
+async function getLikes() {
+  const res = await getLikeList({
+    page_num: page_num.value,
+    page_size: queryObj.page_size,
+    resource_type: queryObj.resource_type,
+    favorite_type: queryObj.favorite_type,
+  });
+  dataList.value.push(...(res.likes || []).map((item) => item.resource));
+}
+
+function play() {
+  if (Hls.isSupported()) {
+    const instance = new Hls();
+    const video = document.querySelector(`#${currentResource.value.name}`);
+    instance.loadSource(parseUrlToPath(currentResource.value.video_url));
+    instance.attachMedia(video);
+    video.play();
+  } else {
+    console.warn('当前浏览器不支持Hls.js');
+  }
+}
+
+function onSwiper(swiper) {
+  swiper.slideTo(currentNum.value - 1);
+}
+
+function onSourceChange(swiper) {
+  const isPrev = currentNum.value > swiper.activeIndex + 1;
+  currentNum.value = swiper.activeIndex + 1;
+  currentResource.value = dataList.value.find((item, index) => {
+    if (item.id == currentResource.value.id) {
+      return dataList.value[index + (isPrev ? -1 : 1)];
+    }
+  });
+  if (swiper.activeIndex + 1 === dataList.value.length) {
+    page_num.value++;
+    getData();
+  }
+}
 
 async function like() {
-  await postLike({
-    resource_id: currentResource.value.resource_id,
-  });
+  if (!currentResource.value.is_like) {
+    try {
+      await postLike({
+        resource_id: currentResource.value.id,
+      });
+      currentResource.value.is_like = true;
+    } catch (e) {}
+  }
 }
 
 async function unlike() {
-  await deleteLike({
-    resource_id: currentResource.value.resource_id,
-  });
+  if (currentResource.value.is_like) {
+    try {
+      await deleteLike({
+        resource_id: currentResource.value.id,
+      });
+      currentResource.value.is_like = false;
+    } catch (e) {}
+  }
 }
 
 function handleBack() {
-  router.push('/m/resource/list');
+  router.go(-1);
 }
 </script>
 
@@ -124,7 +216,7 @@ function handleBack() {
   background: #fff;
   width: 100%;
   height: 100%;
-  padding: 10px;
+  padding: 0 10px 10px;
   background: #fff;
   box-sizing: border-box;
   display: flex;

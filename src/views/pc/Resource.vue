@@ -1,10 +1,10 @@
 <template>
   <div class="resource-container">
     <div class="top">
-      <div v-if="isShowResource" class="back" @click="back">
+      <!-- <div v-if="isShowResource" class="back" @click="back">
         <n-icon><ArrowBackIosFilled /></n-icon>
         <div>返回</div>
-      </div>
+      </div> -->
 
       <n-breadcrumb separator=">" style="padding: 0">
         <n-breadcrumb-item v-for="(item, index) in breadcrumbCategory">
@@ -18,14 +18,13 @@
           clearable
           placeholder="Search"
           v-model:value="state.query.key"
+          style="margin-left: 10px;"
         >
           <template #prefix>
             <n-icon :component="IosSearch" />
           </template>
         </n-input>
-        <n-button @click="renderResources" style="margin-left: 10px">
-          查询
-        </n-button>
+        <n-button @click="query" style="margin-left: 10px"> 查询 </n-button>
       </template>
     </div>
 
@@ -41,6 +40,7 @@
           默认
         </n-tag>
         <n-tag
+          v-if="!isFavorite"
           size="small"
           round
           :color="isPorpular ? activeStyle : undefined"
@@ -166,7 +166,18 @@ function back() {
   isShowResource.value = false;
 }
 
+// 筛选查询
+function query() {
+  if (isFavorite.value) {
+    renderFavorite();
+  } else {
+    renderResources();
+  }
+}
+
 // 排序方式
+const isFavorite = ref(false);
+
 function sort(type) {
   state.query.order_by = type;
   renderResources();
@@ -200,6 +211,7 @@ const state = reactive({
 });
 
 async function onClickDir(item) {
+  breadcrumbCategory.value.push(item.label);
   state.query.resource_type = item.value;
   await renderFavorite();
   isShowResource.value = true;
@@ -284,21 +296,23 @@ watch(store.state, (val) => {
   const id = dirType
     ? val.selectedCategory.category_id
     : val.selectedCategory.id;
-  const isFavorite = [
-    favoriteTypeEnum.MY_FAVORITE,
-    favoriteTypeEnum.FAVORITE,
-  ].includes(val.selectedCategory.id);
 
-  selectedCategory.value = id;
-  if (!dirType) {
-    breadcrumbCategory.value = getBreadcrumb(
-      val.allCategories,
-      val.selectedCategory.id
-    );
+  if (
+    val.selectedCategory.id === favoriteTypeEnum.MY_FAVORITE ||
+    val.selectedCategory.id === favoriteTypeEnum.FAVORITE
+  ) {
+    isShowDir.value = true;
+    isFavorite.value = true;
   }
-  isShowDir.value = isFavorite;
+
+  breadcrumbCategory.value = getBreadcrumb(
+    val.allCategories,
+    val.selectedCategory.id
+  );
+  selectedCategory.value = id;
   state.query.category_id = id;
   state.query.resource_type = dirType;
+
   if (dirType !== undefined) {
     isShowDir.value = false;
     renderResources();
