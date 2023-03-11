@@ -189,9 +189,9 @@ const columns = [
         NButton,
         {
           'data-clipboard-text': row.activation_code.code,
-          id: row.activation_code.code,
+          id: 'code' + row.activation_code.code,
           onClick() {
-            copyContact(row.activation_code.code);
+            copyContact('code' + row.activation_code.code);
             message.success('复制成功！');
           },
         },

@@ -46,7 +46,10 @@
         </n-form-item>
         <n-form-item label="分区描述" path="description">
           <editor
-            v-if="!selectedRow.parent_category_id"
+            v-if="
+              !selectedRow.parent_category_id &&
+              (optionType === CREATE_CATEGORIE || optionType === EDIT_CATEGORIE)
+            "
             :html="categorie.formData.description"
             @onChange="onEditorChange"
           />
@@ -259,7 +262,7 @@ function editCat() {
       ...categorie.formData,
       seq: parseInt(categorie.formData.seq),
       parent_category_id:
-        selectedRow.parent_category_id == 0 ? 0 : selectedRow.id,
+        selectedRow.parent_category_id == 0 ? 0 : selectedRow.parent_category_id,
     });
     renderTree();
     categorie.isShow = false;
@@ -299,7 +302,7 @@ watch(
 const pattern = ref('');
 
 function renderOptions({ option }) {
-  if (isUser()) return h(null);
+  if (isUser() || option.dirType) return h(null);
 
   const iconAttrs = {
     style: {

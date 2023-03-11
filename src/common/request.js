@@ -40,7 +40,7 @@ request.interceptors.response.use(
     if (error.response.status === 401) {
       logout();
     }
-    message.error(error.message);
+    message.error(error.response.data.error);
     return Promise.reject(error);
   }
 );
