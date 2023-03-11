@@ -21,7 +21,7 @@
         <swiper-slide class="res-item" v-for="item in state.dataList">
           <template v-if="item.resource_type === 'VIDEO'">
             <video
-              :id="item.name"
+              :id="'video' + item.id"
               class="res"
               muted
               controls
@@ -34,7 +34,7 @@
             </video>
           </template>
           <template v-else>
-            <img :src="parseUrlToPath(item.picture_url)" style="height: 100%">
+            <img :id="'picture' + item.id" :src="parseUrlToPath(item.picture_url)" style="width;: 100%" />
             <!-- <n-image :src="parseUrlToPath(item.picture_url)" lazy /> -->
           </template>
         </swiper-slide>
@@ -93,7 +93,9 @@ renderResources();
 function play() {
   if (Hls.isSupported()) {
     const instance = new Hls();
-    const video = document.querySelector(`#${state.currentRes.name}`);
+    const video = document.querySelector(
+      `#${'video' + state.currentRes.id}`
+    );
     instance.loadSource(parseUrlToPath(state.currentRes.video_url));
     instance.attachMedia(video);
     video.play();
@@ -101,6 +103,11 @@ function play() {
     console.warn('当前浏览器不支持Hls.js');
   }
 }
+
+// function setPictureStyle(item) {
+//   const el = document.querySelector('picture' + item.id);
+//   debugger;
+// }
 
 watch(
   () => state.currentRes,
@@ -125,9 +132,9 @@ const onSlideChange = (swiper) => {
 function goToResourcePage() {
   router.push({
     path: '/resource',
-    // query: {
-    //   key: route.query.key
-    // }
+    query: {
+      reload: true
+    }
   });
 }
 </script>

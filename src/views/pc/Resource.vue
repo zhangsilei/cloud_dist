@@ -18,7 +18,7 @@
           clearable
           placeholder="Search"
           v-model:value="state.query.key"
-          style="margin-left: 10px;"
+          style="margin-left: 10px"
         >
           <template #prefix>
             <n-icon :component="IosSearch" />
@@ -128,6 +128,7 @@ import {
   NGridItem,
   NFormItem,
   NButton,
+  NPagination,
 } from 'naive-ui';
 import { MdCash, IosSearch } from '@vicons/ionicons4';
 import { ArrowBackIosFilled } from '@vicons/material';
@@ -150,14 +151,16 @@ import {
   resourceSortEnum,
   resourceTypeEnum,
   POPULAR_CATEGORY_KEY,
+  formatDate,
 } from '@/common/global';
 import PopupWindow from '@/components/pc/PopupWindow';
 import moment from 'moment';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { getLikeList } from '@/api/like';
 
 const store = useStore();
 const router = useRouter();
+const route = useRoute();
 
 // 返回目录页
 function back() {
@@ -292,23 +295,34 @@ function getBreadcrumb(allCategories, category_id) {
 }
 
 watch(store.state, (val) => {
-  const dirType = val.selectedCategory.dirType;
-  const id = dirType
-    ? val.selectedCategory.category_id
-    : val.selectedCategory.id;
+  init(val.selectedCategory, val.allCategories);
+});
+
+router.beforeEach((to, from) => {
+  if (from.path === '/resource/detail') {
+    setTimeout(() => {
+      init(store.state.selectedCategory, store.state.allCategories);
+    }, 1000);
+  }
+});
+
+if (route.query.reload) {
+  init(store.state.selectedCategory, store.state.allCategories);
+}
+
+function init(selectedCategory, allCategories) {
+  const dirType = selectedCategory.dirType;
+  const id = dirType ? selectedCategory.category_id : selectedCategory.id;
 
   if (
-    val.selectedCategory.id === favoriteTypeEnum.MY_FAVORITE ||
-    val.selectedCategory.id === favoriteTypeEnum.FAVORITE
+    selectedCategory.id === favoriteTypeEnum.MY_FAVORITE ||
+    selectedCategory.id === favoriteTypeEnum.FAVORITE
   ) {
     isShowDir.value = true;
     isFavorite.value = true;
   }
 
-  breadcrumbCategory.value = getBreadcrumb(
-    val.allCategories,
-    val.selectedCategory.id
-  );
+  breadcrumbCategory.value = getBreadcrumb(allCategories, selectedCategory.id);
   selectedCategory.value = id;
   state.query.category_id = id;
   state.query.resource_type = dirType;
@@ -319,7 +333,7 @@ watch(store.state, (val) => {
   } else {
     state.dataList = [];
   }
-});
+}
 
 async function renderFavorite() {
   const res = await getLikeList({
