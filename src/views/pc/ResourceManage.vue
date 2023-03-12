@@ -218,6 +218,7 @@ const isPhoto = computed(
 
 function onClickUpload() {
   resource.formData.category_id = selectedCategory.value;
+  resource.formData.resource_type = resource.query.resource_type;
   resource.isShow = true;
 }
 
