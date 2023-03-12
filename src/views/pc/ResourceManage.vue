@@ -39,6 +39,7 @@
               @on-edit="editRes(item)"
               @on-detail="detailResource(item)"
               @on-delete="deleteRes(item)"
+              @click.native="goToDetailPage(item)"
             ></video-card>
           </n-grid-item>
         </n-grid>
@@ -189,7 +190,9 @@ import {
 } from '@/api/resource';
 import { useStore } from 'vuex';
 import moment from 'moment';
+import { useRouter, useRoute } from 'vue-router';
 
+const router = useRouter();
 const store = useStore();
 const { message, dialog } = createDiscreteApi(['message', 'dialog']);
 
@@ -393,6 +396,15 @@ function deleteRes(item) {
       renderResources();
     },
     onNegativeClick: () => {},
+  });
+}
+function goToDetailPage(item) {
+  router.push({
+    path: '/resource/detail',
+    query: {
+      ...resource.query,
+      currentId: item.id,
+    },
   });
 }
 watch(
