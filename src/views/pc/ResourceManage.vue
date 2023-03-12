@@ -74,34 +74,28 @@
           <n-input v-model:value="resource.formData.name" />
         </n-form-item>
         <n-form-item v-if="isVideo" label="视频" path="video_url">
-          <n-upload directory-dnd @change="onUpload">
-            <n-upload-dragger>
-              <div style="margin-bottom: 12px">
-                <n-icon size="48" :depth="3">
-                  <CameraOutline />
-                </n-icon>
-              </div>
-              <n-text style="font-size: 14px"> 添加视频 </n-text>
-              <!-- <n-p depth="3" style="margin: 8px 0 0 0">
-                （图片大小不超过100M）
-              </n-p> -->
-            </n-upload-dragger>
-          </n-upload>
+          <n-space>
+            <n-upload directory-dnd @change="onUpload">
+              <n-button>上传视频</n-button>
+            </n-upload>
+            <n-image
+              v-if="resource.formData.picture_url"
+              :src="parseUrlToPath(resource.formData.picture_url)"
+              style="height: 100px"
+            ></n-image>
+          </n-space>
         </n-form-item>
         <n-form-item v-if="isPhoto" label="图片" path="picture_url">
-          <n-upload directory-dnd @change="onUpload">
-            <n-upload-dragger>
-              <div style="margin-bottom: 12px">
-                <n-icon size="48" :depth="3">
-                  <add />
-                </n-icon>
-              </div>
-              <n-text style="font-size: 16px"> 上传图片 </n-text>
-              <!-- <n-p depth="3" style="margin: 8px 0 0 0">
-                （图片大小不超过1M）
-              </n-p> -->
-            </n-upload-dragger>
-          </n-upload>
+          <n-space>
+            <n-upload directory-dnd @change="onUpload">
+              <n-button>上传图片</n-button>
+            </n-upload>
+            <n-image
+              v-if="resource.formData.picture_url"
+              :src="parseUrlToPath(resource.formData.picture_url)"
+              style="height: 100px"
+            ></n-image>
+          </n-space>
         </n-form-item>
         <n-form-item label="描述" path="description">
           <n-input v-model:value="resource.formData.description" />

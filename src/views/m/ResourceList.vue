@@ -35,7 +35,7 @@
         v-for="item in categoryList"
         @click="navigateToList(item)"
       >
-        <img class="poster" :src="parseUrlToPath(item.picture_url)" />
+        <img class="poster" :src="parseUrlToPath(item.icon)" />
         <div>{{ item.name }}</div>
       </div>
     </div>
@@ -48,6 +48,7 @@
           size="small"
           round
           checkable
+          style="margin-right: 5px"
           :checked="order_by === item.key"
           @update:checked="onSortChange(item)"
         >
@@ -77,7 +78,8 @@
               <div class="poster">
                 <n-image
                   preview-disabled
-                  width="50"
+                  width="100"
+                  height="80"
                   :src="parseUrlToPath(row.picture_url)"
                 />
                 <n-icon
@@ -117,6 +119,9 @@
               />
               <div>{{ row.like_num }}</div>
             </n-space>
+          </n-space>
+          <n-space v-if="loading" justify="center">
+            <n-spin size="small" />
           </n-space>
         </n-tab-pane>
       </n-tabs>
@@ -181,6 +186,7 @@ import {
   NModal,
   NCard,
   NButton,
+  NSpin,
 } from 'naive-ui';
 import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
 import { stringify } from 'qs';
@@ -227,15 +233,7 @@ const categoryList = ref([]);
 async function renderCategoryList() {
   const res = await getCategorieList();
   const dataList = filterTableMater(parseInt(category.value), res.items || []);
-  // TODO: mock picture_url
-  const a = dataList.items.map((item) => {
-    return {
-      ...item,
-      picture_url: 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg',
-    };
-  });
-  categoryList.value = a;
-  // categoryList.value = dataList.items;
+  categoryList.value = dataList.items;
 }
 
 const isFromSearch = ref(false);
@@ -277,17 +275,61 @@ const likeParams = reactive({
 });
 
 async function renderFavoriteList() {
+  loading.value = true;
   const res = await getLikeList(likeParams);
   const dataList = (res.likes || []).map((item) => {
     return {
       ...item.resource,
+      is_like: item.is_like,
       has_permissions: item.has_permissions,
-      // has_permissions: true, // TODO:mock
     };
   });
-  resourceList.value = dataList;
+  if (route.query.isFromSearch) {
+    resourceList.value = dataList;
+  } else {
+    resourceList.value.push(...dataList);
+  }
   total.value = res.total;
+  loading.value = false;
 }
+
+onMounted(() => {
+  addScrollListener();
+});
+
+const isScrollBottom = ref(false);
+
+watch(isScrollBottom, (val) => {
+  if (val) {
+    if (route.query.isFromFavorite) {
+      if (resourceList.value.length < total.value) {
+        likeParams.page_num++;
+        renderFavoriteList();
+      }
+    } else {
+      if (resourceList.value.length < total.value) {
+        query.page_num++;
+        renderResourceList();
+      }
+    }
+  }
+});
+
+function addScrollListener() {
+  document.querySelector('.n-tab-pane').addEventListener('scroll', (e) => {
+    // console.log(e,'滚动条滚动触发')
+    var scrollTop = e.target.scrollTop;
+    var windowHeight = e.target.clientHeight;
+    var scrollHeight = e.target.scrollHeight;
+    if (scrollTop + windowHeight == scrollHeight) {
+      // 当前滚动条已经触底
+      isScrollBottom.value = true;
+    } else {
+      isScrollBottom.value = false;
+    }
+  });
+}
+
 // const tabs = ref(null);
 // const dataList = ref(null);
 // const categoryParams = reactive({
@@ -357,15 +399,20 @@ const tabHeight = ref(0);
 //   favoriteTypeEnum.FAVORITE,
 // ].includes(route.query.category_id);
 
-function onTabChange(val) {
+async function onTabChange(val) {
   resourceList.value = [];
+  likeParams.page_num = 1;
+  query.page_num = 1;
   if (route.query.isFromFavorite) {
     likeParams.resource_type = val;
-    renderFavoriteList();
+    await renderFavoriteList();
   } else {
     query.resource_type = val;
-    renderResourceList();
+    await renderResourceList();
   }
+  setTimeout(() => {
+    addScrollListener();
+  }, 300);
 }
 
 let timer = null;
@@ -410,21 +457,20 @@ const query = reactive({
   key: null,
   order_by: DEFAULT_SORT_KEY,
   resource_type: 'VIDEO',
-  // order_type: '',
+  order_type: 'desc',
 });
+const loading = ref(false);
 
 async function renderResourceList() {
+  loading.value = true;
   const res = await getResourceList(query);
-  // TODO: mock
-  const aa = res.resources.map((item) => {
-    return {
-      ...item,
-      has_permissions: true,
-    };
-  });
-  resourceList.value = aa;
-  // resourceList.value = res.resources || [];
+  if (route.query.isFromSearch) {
+    resourceList.value = res.resources || [];
+  } else {
+    resourceList.value.push(...(res.resources || []));
+  }
   total.value = res.total;
+  loading.value = false;
 }
 
 init();
@@ -435,6 +481,7 @@ function navigateToDetail(item) {
     query: {
       ...item,
       ...(route.query.isFromFavorite ? likeParams : query),
+      ...(route.query.isFromSearch ? { key: query.key } : null),
       total: total.value,
       isFromFavorite: route.query.isFromFavorite,
     },

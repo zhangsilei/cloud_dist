@@ -21,6 +21,7 @@
         <n-layout-header>
           <n-page-header style="height: 61px">
             <template #extra>
+              <span style="margin-right: 10px;">在线人数：{{ online_num }}</span>
               <n-dropdown
                 placement="bottom-start"
                 :options="options"
@@ -192,12 +193,14 @@ export default {
 
     const logoUrl = ref(null);
     const webName = ref(null);
+    const online_num = ref(0);
     const KEY_NAME = 'name';
     const KEY_LOGO = 'logo';
 
     async function render() {
       const res = await getSettingConfigs();
       const dataList = res.system_configs || [];
+      online_num.value = res.online_num;
       webName.value = dataList.find((item) => item.key === KEY_NAME).value;
       logoUrl.value = parseUrlToPath(
         dataList.find((item) => item.key === KEY_LOGO).value
@@ -232,6 +235,7 @@ export default {
       header,
       logoUrl,
       webName,
+      online_num,
     };
   },
 };

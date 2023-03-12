@@ -28,7 +28,7 @@
       <swiper-slide v-for="item in dataList">
         <template v-if="item.resource_type === 'VIDEO'">
           <video
-            :id="item.name"
+            :id="'video' + item.id"
             muted
             controls
             controlsList="nodownload"
@@ -101,35 +101,12 @@ watch(currentResource, (val) => {
 
 init();
 
-async function getData() {
-  if (queryObj.isFromFavorite) {
-    await getLikes();
-  } else {
-    await getResources();
-  }
-}
-
 async function init() {
-  await getData();
-  if (page_num.value < queryObj.page_num) {
-    page_num.value++;
-    await init();
-    return;
+  if (route.query.isFromFavorite) {
+    getLikes();
+  } else {
+    getResources();
   }
-  setCurrentData();
-}
-
-function setCurrentData() {
-  let currentPageNum = 0;
-  dataList.value.find((item, index) => {
-    if (item.id == queryObj.id) {
-      currentResource.value = item;
-      currentPageNum = index + 1;
-    }
-  });
-  totalNum.value = queryObj.total;
-  currentNum.value =
-    (queryObj.page_num - 1) * queryObj.page_size + currentPageNum;
 }
 
 async function getResources() {
@@ -141,7 +118,22 @@ async function getResources() {
     order_by: queryObj.order_by,
     key: queryObj.key,
   });
-  dataList.value.push(...(res.resources || []));
+  const data = res.resources || [];
+  dataList.value.push(...data);
+
+  if (page_num.value < route.query.page_num) {
+    page_num.value++;
+    getResources();
+    return;
+  }
+
+  totalNum.value = res.total;
+  dataList.value.find((item, index) => {
+    if (item.id == route.query.id) {
+      currentNum.value = index + 1;
+      currentResource.value = item;
+    }
+  });
 }
 
 async function getLikes() {
@@ -151,13 +143,34 @@ async function getLikes() {
     resource_type: queryObj.resource_type,
     favorite_type: queryObj.favorite_type,
   });
-  dataList.value.push(...(res.likes || []).map((item) => item.resource));
+  const data = (res.likes || []).map((item) => {
+    return {
+      ...item.resource,
+      is_like: item.is_like,
+      has_permissions: item.has_permissions,
+    };
+  });
+  dataList.value.push(...data);
+
+  if (page_num.value < route.query.page_num) {
+    page_num.value++;
+    getLikes();
+    return;
+  }
+
+  totalNum.value = res.total;
+  dataList.value.find((item, index) => {
+    if (item.id == route.query.id) {
+      currentNum.value = index + 1;
+      currentResource.value = item;
+    }
+  });
 }
 
 function play() {
   if (Hls.isSupported()) {
     const instance = new Hls();
-    const video = document.querySelector(`#${currentResource.value.name}`);
+    const video = document.querySelector(`#video${currentResource.value.id}`);
     instance.loadSource(parseUrlToPath(currentResource.value.video_url));
     instance.attachMedia(video);
     video.play();
@@ -171,17 +184,29 @@ function onSwiper(swiper) {
 }
 
 function onSourceChange(swiper) {
-  const isPrev = currentNum.value > swiper.activeIndex + 1;
-  currentNum.value = swiper.activeIndex + 1;
-  currentResource.value = dataList.value.find((item, index) => {
-    if (item.id == currentResource.value.id) {
-      return dataList.value[index + (isPrev ? -1 : 1)];
+  getNextData(swiper.realIndex).then(() => {
+    currentNum.value = swiper.realIndex + 1;
+    currentResource.value = dataList.value[swiper.realIndex];
+  });
+}
+
+function getNextData(index) {
+  const isFromFavorite = route.query.isFromFavorite;
+  return new Promise((resolve) => {
+    if (
+      index === dataList.value.length - 1 &&
+      dataList.value.length < totalNum.value
+    ) {
+      page_num.value++;
+      if (isFromFavorite) {
+        getLikes().then(() => resolve());
+      } else {
+        getResources().then(() => resolve());
+      }
+    } else {
+      resolve();
     }
   });
-  if (swiper.activeIndex + 1 === dataList.value.length) {
-    page_num.value++;
-    getData();
-  }
 }
 
 async function like() {

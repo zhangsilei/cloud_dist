@@ -61,6 +61,18 @@
             :allow-input="onlyAllowNumber"
           />
         </n-form-item>
+        <n-form-item label="图片" path="icon">
+          <n-space>
+            <n-upload directory-dnd @change="onUpload">
+              <n-button>上传图片</n-button>
+            </n-upload>
+            <n-image
+              v-if="categorie.formData.icon"
+              :src="parseUrlToPath(categorie.formData.icon)"
+              style="height: 100px"
+            ></n-image>
+          </n-space>
+        </n-form-item>
       </n-form>
     </popup-window>
   </div>
@@ -79,6 +91,9 @@ import {
   NSpace,
   NIcon,
   NDropdown,
+  NUpload,
+  NUploadDragger,
+  NImage,
 } from 'naive-ui';
 import { ref, reactive, watch, computed, h, onMounted } from 'vue';
 import {
@@ -97,10 +112,12 @@ import {
   popularCategoryEnum,
   favoriteTypeEnum,
   getDefaultExpandedKeys,
+  parseUrlToPath,
 } from '@/common/global';
 import { useStore } from 'vuex';
 import { getSelectedCategory } from '@/common/cookie';
 import Editor from '@/components/pc/Editor';
+import { postPicture } from '@/api/file';
 
 const store = useStore();
 const { message } = createDiscreteApi(['message']);
@@ -202,7 +219,7 @@ const categorie = reactive({
   formData: ref({
     name: null,
     description: null,
-    // icon: null,
+    icon: null,
     // parent_category_id: null,
     seq: null,
   }),
@@ -221,6 +238,11 @@ const categorie = reactive({
       required: true,
       trigger: ['blur', 'input'],
       message: '请输入排序',
+    },
+    icon: {
+      required: true,
+      trigger: ['blur', 'change'],
+      message: '请上传图片',
     },
   },
 });
@@ -262,7 +284,9 @@ function editCat() {
       ...categorie.formData,
       seq: parseInt(categorie.formData.seq),
       parent_category_id:
-        selectedRow.parent_category_id == 0 ? 0 : selectedRow.parent_category_id,
+        selectedRow.parent_category_id == 0
+          ? 0
+          : selectedRow.parent_category_id,
     });
     renderTree();
     categorie.isShow = false;
@@ -352,6 +376,7 @@ function renderOptions({ option }) {
               name: option.name,
               description: option.description,
               seq: option.seq.toString(),
+              icon: option.icon,
             };
           }
           categorie.title = label;
@@ -369,6 +394,28 @@ function onSelectHandle(keys, option, meta) {
 
 function onEditorChange(html) {
   categorie.formData.description = html;
+}
+
+const uplodFile = ref(null);
+
+function onUpload({ file }) {
+  uplodFile.value = file;
+  file.status = 'uploading';
+  file.percentage = 0;
+  const timer = setInterval(() => {
+    if (uplodFile.value.status === 'finished') {
+      clearInterval(timer);
+      return;
+    }
+    uplodFile.value.percentage += Math.random() * 30;
+  }, 1000);
+  postPicture(file).then(({ url }) => {
+    categorie.formData.icon = url;
+    uplodFile.value.percentage = 100;
+    setTimeout(() => {
+      uplodFile.value.status = 'finished';
+    }, 0);
+  });
 }
 
 // function onExpandedHandle(keys, option, meta) {

@@ -83,12 +83,14 @@ const state = reactive({
   currentRes: ref(null),
 });
 
+const page_num = ref(1);
+
 function init() {
+  const isFromFavorite = [
+    favoriteTypeEnum.FAVORITE,
+    favoriteTypeEnum.MY_FAVORITE,
+  ].includes(store.state.selectedCategory.id);
   try {
-    const isFromFavorite = [
-      favoriteTypeEnum.FAVORITE,
-      favoriteTypeEnum.MY_FAVORITE,
-    ].includes(store.state.selectedCategory.id);
     if (isFromFavorite) {
       renderFavorite();
     } else {
@@ -98,11 +100,21 @@ function init() {
 }
 
 async function renderResources() {
-  const res = await getResourceList(route.query);
+  const res = await getResourceList({
+    ...route.query,
+    page_num: page_num.value,
+  });
   const dataList = res.resources || [];
-  state.dataList = dataList;
+  state.dataList.push(...dataList);
+
+  if (page_num.value < route.query.page_num) {
+    page_num.value++;
+    renderResources();
+    return;
+  }
+
   state.resTotalNums = res.total;
-  dataList.find((item, index) => {
+  state.dataList.find((item, index) => {
     if (item.id == route.query.currentId) {
       state.resCurrentNum = index + 1;
       state.resName = item.name;
@@ -113,7 +125,7 @@ async function renderResources() {
 
 async function renderFavorite() {
   const res = await getLikeList({
-    page_num: route.query.page_num,
+    page_num: page_num.value,
     page_size: route.query.page_size,
     resource_type: route.query.resource_type,
     favorite_type: store.state.selectedCategory.id,
@@ -124,9 +136,16 @@ async function renderFavorite() {
       has_permissions: item.has_permissions,
     };
   });
-  state.dataList = dataList;
+  state.dataList.push(...dataList);
+
+  if (page_num.value < route.query.page_num) {
+    page_num.value++;
+    renderFavorite();
+    return;
+  }
+
   state.resTotalNums = res.total;
-  dataList.find((item, index) => {
+  state.dataList.find((item, index) => {
     if (item.id == route.query.currentId) {
       state.resCurrentNum = index + 1;
       state.resName = item.name;
@@ -147,7 +166,9 @@ function play() {
   }
 }
 
-init();
+try {
+  init();
+} catch (e) {}
 
 watch(
   () => store.state.selectedCategory,
@@ -178,9 +199,35 @@ const onSwiper = (swiper) => {
   console.log(swiper);
 };
 const onSlideChange = (swiper) => {
-  state.resCurrentNum = swiper.realIndex + 1;
   console.log('slide change');
+  getNextData(swiper.realIndex).then(() => {
+    state.resCurrentNum = swiper.realIndex + 1;
+    state.currentRes = state.dataList[swiper.realIndex];
+    state.resName = state.dataList[swiper.realIndex].name;
+  });
 };
+
+async function getNextData(index) {
+  const isFromFavorite = [
+    favoriteTypeEnum.FAVORITE,
+    favoriteTypeEnum.MY_FAVORITE,
+  ].includes(store.state.selectedCategory.id);
+  return new Promise((resolve) => {
+    if (
+      index === state.dataList.length - 1 &&
+      state.dataList.length < state.resTotalNums
+    ) {
+      page_num.value++;
+      if (isFromFavorite) {
+        renderFavorite().then(() => resolve());
+      } else {
+        renderResources().then(() => resolve());
+      }
+    } else {
+      resolve();
+    }
+  });
+}
 
 function goToResourcePage() {
   router.push({

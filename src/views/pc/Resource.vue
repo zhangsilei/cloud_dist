@@ -35,6 +35,7 @@
           size="small"
           round
           :color="isDefault ? activeStyle : undefined"
+          style="cursor: pointer"
           @click="sort(SORT_TYPE_DEFAULT)"
         >
           默认
@@ -76,6 +77,7 @@
         </n-grid-item>
       </n-grid>
       <n-pagination
+        v-if="!isShowDir"
         style="justify-content: flex-end"
         v-model:page="state.query.page_num"
         :item-count="state.total"
@@ -183,6 +185,11 @@ function query() {
 const isFavorite = ref(false);
 
 function sort(type) {
+  if (
+    store.state.selectedCategory.id === favoriteTypeEnum.FAVORITE ||
+    store.state.selectedCategory.id === favoriteTypeEnum.MY_FAVORITE
+  )
+    return;
   state.query.order_by = type;
   renderResources();
 }
@@ -210,7 +217,7 @@ const state = reactive({
     key: null,
     order_by: resourceSortEnum.DEFAULT,
     resource_type: null,
-    // order_type: '',
+    order_type: 'desc',
   },
 });
 
@@ -229,6 +236,7 @@ async function renderResources() {
   // } else if (type === 'Photos') {
   //   query.resource_type = 2;
   // }
+  state.dataList = [];
   state.loading = true;
   const res = await getResourceList(state.query);
   const dataList = res.resources || [];
@@ -243,7 +251,11 @@ async function renderResources() {
 
 function changePage(page) {
   state.query.page_num = page;
-  renderResources();
+  if (isFavorite.value) {
+    renderFavorite();
+  } else {
+    renderResources();
+  }
 }
 
 const FAVORITE_DIR_KEY = 'Favorite';
@@ -298,6 +310,7 @@ function getBreadcrumb(allCategories, category_id) {
 watch(
   () => store.state.selectedCategory,
   (val) => {
+    state.query.page_num = 1;
     init(val, store.state.allCategories);
   }
 );
@@ -316,6 +329,8 @@ function init(selectedCategory, allCategories) {
   ) {
     isShowDir.value = true;
     isFavorite.value = true;
+  } else {
+    isFavorite.value = false;
   }
 
   breadcrumbCategory.value = getBreadcrumb(allCategories, selectedCategory.id);
@@ -332,6 +347,8 @@ function init(selectedCategory, allCategories) {
 }
 
 async function renderFavorite() {
+  state.dataList = [];
+  state.loading = true;
   const res = await getLikeList({
     page_num: state.query.page_num,
     page_size: state.query.page_size,
@@ -341,10 +358,13 @@ async function renderFavorite() {
   const dataList = (res.likes || []).map((item) => {
     return {
       ...item.resource,
+      is_like: item.is_like,
       has_permissions: item.has_permissions,
     };
   });
   state.dataList = dataList;
+  state.total = res.total;
+  state.loading = false;
 }
 
 const detail = reactive({

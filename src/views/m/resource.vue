@@ -31,7 +31,7 @@
       >
         <n-grid x-gap="12" y-gap="12" :cols="4">
           <n-gi v-for="item in dataList" @click="onClickChildCategory(item)">
-            <img class="poster" :src="parseUrlToPath(item.picture_url)" />
+            <img class="poster" :src="parseUrlToPath(item.icon)" />
             <div>
               <n-ellipsis style="max-width: 75px">
                 {{ item.name }}
@@ -167,27 +167,18 @@ async function renderList() {
   if (selectedTag.value.id !== POPULAR_CATEGORY_KEY) {
     // const res = await getResourceList(dataListParams);
     // dataList.value = res.resources || [];
-    // TODO: mock picture_url
-    const a = selectedTag.value.items.map((item) => {
-      return {
-        ...item,
-        picture_url:
-          'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg',
-      };
-    });
-    dataList.value = a || [];
-    // dataList.value = selectedTag.value.items || [];
+    dataList.value = selectedTag.value.items || [];
   } else {
     dataList.value = [
       {
         id: favoriteTypeEnum.MY_FAVORITE,
         name: favoriteTypeEnum.getDesc('MY_FAVORITE'),
-        picture_url: myFavorite,
+        icon: myFavorite,
       },
       {
         id: favoriteTypeEnum.FAVORITE,
         name: favoriteTypeEnum.getDesc('FAVORITE'),
-        picture_url: favorite,
+        icon: favorite,
       },
     ];
   }
