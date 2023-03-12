@@ -463,7 +463,10 @@ const loading = ref(false);
 
 async function renderResourceList() {
   loading.value = true;
-  const res = await getResourceList(query);
+  const res = await getResourceList({
+    ...query,
+    category_id: route.query.category_id
+  });
   if (route.query.isFromSearch) {
     resourceList.value = res.resources || [];
   } else {

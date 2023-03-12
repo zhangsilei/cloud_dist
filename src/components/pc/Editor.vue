@@ -34,8 +34,9 @@ const editorConfig = {
   placeholder: '请输入内容...',
   MENU_CONF: {
     uploadImage: {
-      server: 'http://140.210.213.108/',
+      server: 'http://140.210.213.108/api/network-disk/v1/pictures',
       headers: {
+        'Content-type': 'multipart/form-data',
         token: getToken(),
       },
       fieldName: 'picture',

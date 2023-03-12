@@ -183,6 +183,7 @@ async function renderTree() {
             category_id: item.id,
             dirType: resourceTypeEnum.PHOTOS,
             parent_category_id: item.id,
+            has_permissions: true,
           });
           item.items.unshift({
             id: videosDesc + item.id,
@@ -190,6 +191,7 @@ async function renderTree() {
             category_id: item.id,
             dirType: resourceTypeEnum.VIDEOS,
             parent_category_id: item.id,
+            has_permissions: true,
           });
         }
         insertDir(item.items);

@@ -1,89 +1,94 @@
 <template>
   <div class="resource-container">
-    <div class="top">
-      <!-- <div v-if="isShowResource" class="back" @click="back">
-        <n-icon><ArrowBackIosFilled /></n-icon>
-        <div>返回</div>
-      </div> -->
+    <template v-if="!has_permissions">
+      <div v-html="description"></div>
+    </template>
+    <template v-else>
+      <div class="top">
+        <!-- <div v-if="isShowResource" class="back" @click="back">
+          <n-icon><ArrowBackIosFilled /></n-icon>
+          <div>返回</div>
+        </div> -->
 
-      <n-breadcrumb separator=">" style="padding: 0">
-        <n-breadcrumb-item v-for="(item, index) in breadcrumbCategory">
-          {{ item }}
-        </n-breadcrumb-item>
-      </n-breadcrumb>
+        <n-breadcrumb separator=">" style="padding: 0">
+          <n-breadcrumb-item v-for="(item, index) in breadcrumbCategory">
+            {{ item }}
+          </n-breadcrumb-item>
+        </n-breadcrumb>
 
-      <template v-if="isShowResource && !isFavorite">
-        <n-input
-          round
-          clearable
-          placeholder="Search"
-          v-model:value="state.query.key"
-          style="margin-left: 10px"
-        >
-          <template #prefix>
-            <n-icon :component="IosSearch" />
-          </template>
-        </n-input>
-        <n-button @click="query" style="margin-left: 10px"> 查询 </n-button>
-      </template>
-    </div>
-
-    <div v-if="isShowResource" class="sort">
-      <n-space>
-        <span class="label">排序方式</span>
-        <n-tag
-          size="small"
-          round
-          :color="isDefault ? activeStyle : undefined"
-          style="cursor: pointer"
-          @click="sort(SORT_TYPE_DEFAULT)"
-        >
-          默认
-        </n-tag>
-        <n-tag
-          v-if="!isFavorite"
-          size="small"
-          round
-          :color="isPorpular ? activeStyle : undefined"
-          style="cursor: pointer"
-          @click="sort(SORT_TYPE_POPULAR)"
-        >
-          人气
-        </n-tag>
-      </n-space>
-    </div>
-
-    <div class="content">
-      <n-grid :x-gap="8" :y-gap="8" :cols="8">
-        <template v-if="isShowDir">
-          <n-grid-item v-for="(item, index) in state.fileNames" :key="index">
-            <dir-card
-              :file-name="item.label"
-              @click="onClickDir(item)"
-            ></dir-card>
-          </n-grid-item>
+        <template v-if="isShowResource && !isFavorite">
+          <n-input
+            round
+            clearable
+            placeholder="Search"
+            v-model:value="state.query.key"
+            style="margin-left: 10px"
+          >
+            <template #prefix>
+              <n-icon :component="IosSearch" />
+            </template>
+          </n-input>
+          <n-button @click="query" style="margin-left: 10px"> 查询 </n-button>
         </template>
-        <n-grid-item v-for="(item, index) in state.dataList" :key="index">
-          <video-card
-            :id="item.id"
-            :is-like="item.is_like"
-            :file-name="item.name"
-            :like-num="item.like_num"
-            :poster="parseUrlToPath(item.picture_url)"
-            :authority="item.has_permissions"
-            @on-detail="detailResource(item)"
-            @click.native="goToDetailPage(item)"
-          ></video-card>
-        </n-grid-item>
-      </n-grid>
-      <n-pagination
-        v-if="!isShowDir"
-        style="justify-content: flex-end"
-        v-model:page="state.query.page_num"
-        :item-count="state.total"
-        :on-update:page="changePage"
-      />
-    </div>
+      </div>
+
+      <div v-if="isShowResource" class="sort">
+        <n-space>
+          <span class="label">排序方式</span>
+          <n-tag
+            size="small"
+            round
+            :color="isDefault ? activeStyle : undefined"
+            style="cursor: pointer"
+            @click="sort(SORT_TYPE_DEFAULT)"
+          >
+            默认
+          </n-tag>
+          <n-tag
+            v-if="!isFavorite"
+            size="small"
+            round
+            :color="isPorpular ? activeStyle : undefined"
+            style="cursor: pointer"
+            @click="sort(SORT_TYPE_POPULAR)"
+          >
+            人气
+          </n-tag>
+        </n-space>
+      </div>
+
+      <div class="content">
+        <n-grid :x-gap="8" :y-gap="8" :cols="8">
+          <template v-if="isShowDir">
+            <n-grid-item v-for="(item, index) in state.fileNames" :key="index">
+              <dir-card
+                :file-name="item.label"
+                @click="onClickDir(item)"
+              ></dir-card>
+            </n-grid-item>
+          </template>
+          <n-grid-item v-for="(item, index) in state.dataList" :key="index">
+            <video-card
+              :id="item.id"
+              :is-like="item.is_like"
+              :file-name="item.name"
+              :like-num="item.like_num"
+              :poster="parseUrlToPath(item.picture_url)"
+              :authority="item.has_permissions"
+              @on-detail="detailResource(item)"
+              @click.native="goToDetailPage(item)"
+            ></video-card>
+          </n-grid-item>
+        </n-grid>
+        <n-pagination
+          v-if="!isShowDir"
+          style="justify-content: flex-end"
+          v-model:page="state.query.page_num"
+          :item-count="state.total"
+          :on-update:page="changePage"
+        />
+      </div>
+    </template>
 
     <popup-window
       v-model="detail.isShow"
@@ -319,6 +324,9 @@ if (route.params.reload) {
   init(store.state.selectedCategory, store.state.allCategories);
 }
 
+const has_permissions = ref(false);
+const description = ref('');
+
 function init(selectedCategory, allCategories) {
   const dirType = selectedCategory.dirType;
   const id = dirType ? selectedCategory.category_id : selectedCategory.id;
@@ -334,7 +342,7 @@ function init(selectedCategory, allCategories) {
   }
 
   breadcrumbCategory.value = getBreadcrumb(allCategories, selectedCategory.id);
-  selectedCategory.value = id;
+  selectedCategory.value = selectedCategory.id;
   state.query.category_id = id;
   state.query.resource_type = dirType;
 
@@ -344,6 +352,9 @@ function init(selectedCategory, allCategories) {
   } else {
     state.dataList = [];
   }
+
+  has_permissions.value = selectedCategory.has_permissions;
+  description.value = selectedCategory.description;
 }
 
 async function renderFavorite() {
