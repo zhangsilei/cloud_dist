@@ -12,7 +12,7 @@
         </n-breadcrumb-item>
       </n-breadcrumb>
 
-      <template v-if="isShowResource">
+      <template v-if="isShowResource && !isFavorite">
         <n-input
           round
           clearable
@@ -64,7 +64,8 @@
         </template>
         <n-grid-item v-for="(item, index) in state.dataList" :key="index">
           <video-card
-            :id="index"
+            :id="item.id"
+            :is-like="item.is_like"
             :file-name="item.name"
             :like-num="item.like_num"
             :poster="parseUrlToPath(item.picture_url)"
@@ -294,19 +295,14 @@ function getBreadcrumb(allCategories, category_id) {
   }
 }
 
-watch(store.state, (val) => {
-  init(val.selectedCategory, val.allCategories);
-});
-
-router.beforeEach((to, from) => {
-  if (from.path === '/resource/detail') {
-    setTimeout(() => {
-      init(store.state.selectedCategory, store.state.allCategories);
-    }, 1000);
+watch(
+  () => store.state.selectedCategory,
+  (val) => {
+    init(val, store.state.allCategories);
   }
-});
+);
 
-if (route.query.reload) {
+if (route.params.reload) {
   init(store.state.selectedCategory, store.state.allCategories);
 }
 

@@ -28,6 +28,12 @@ export const pcRoutes = [
         name: 'resource',
         authority: ROLE_USER,
         component: () => import('../views/pc/Resource.vue'),
+        beforeEnter: (to, from, next) => {
+          if (from.path === '/resource/detail') {
+            to.params.reload = true;
+          }
+          next();
+        },
       },
       {
         path: '/resource/detail',

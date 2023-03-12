@@ -31,6 +31,7 @@
           <n-grid-item v-for="(item, index) in resource.dataList" :key="index">
             <video-card
               :id="item.id"
+              :is-like="item.is_like"
               :file-name="item.name"
               :like-num="item.like_num"
               :authority="true"
@@ -216,6 +217,7 @@ const isPhoto = computed(
 );
 
 function onClickUpload() {
+  resource.formData.category_id = selectedCategory.value;
   resource.isShow = true;
 }
 

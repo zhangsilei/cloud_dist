@@ -12,6 +12,7 @@
 
     <div class="content">
       <swiper
+        v-if="state.currentRes"
         :navigation="true"
         :modules="modules"
         class="res-swiper"
@@ -34,7 +35,11 @@
             </video>
           </template>
           <template v-else>
-            <img :id="'picture' + item.id" :src="parseUrlToPath(item.picture_url)" style="width;: 100%" />
+            <img
+              :id="'picture' + item.id"
+              :src="parseUrlToPath(item.picture_url)"
+              style="width;: 100%;max-height:100%"
+            />
             <!-- <n-image :src="parseUrlToPath(item.picture_url)" lazy /> -->
           </template>
         </swiper-slide>
@@ -44,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue';
+import { ref, reactive, watch, nextTick, onMounted } from 'vue';
 import { Close } from '@vicons/ionicons5';
 import { NIcon, NImage } from 'naive-ui';
 // Import Swiper Vue.js components
@@ -59,12 +64,16 @@ import { getResourceList } from '@/api/resource';
 import {
   RESOURCE_TYPE_VIDEO,
   RESOURCE_TYPE_PICTURE,
+  favoriteTypeEnum,
   parseUrlToPath,
 } from '@/common/global';
 import Hls from 'hls.js';
+import { getLikeList } from '@/api/like';
+import { useStore } from 'vuex';
 
 const route = useRoute();
 const router = useRouter();
+const store = useStore();
 
 const state = reactive({
   dataList: [],
@@ -73,6 +82,20 @@ const state = reactive({
   resName: '',
   currentRes: ref(null),
 });
+
+function init() {
+  try {
+    const isFromFavorite = [
+      favoriteTypeEnum.FAVORITE,
+      favoriteTypeEnum.MY_FAVORITE,
+    ].includes(store.state.selectedCategory.id);
+    if (isFromFavorite) {
+      renderFavorite();
+    } else {
+      renderResources();
+    }
+  } catch (e) {}
+}
 
 async function renderResources() {
   const res = await getResourceList(route.query);
@@ -88,14 +111,34 @@ async function renderResources() {
   });
 }
 
-renderResources();
+async function renderFavorite() {
+  const res = await getLikeList({
+    page_num: route.query.page_num,
+    page_size: route.query.page_size,
+    resource_type: route.query.resource_type,
+    favorite_type: store.state.selectedCategory.id,
+  });
+  const dataList = (res.likes || []).map((item) => {
+    return {
+      ...item.resource,
+      has_permissions: item.has_permissions,
+    };
+  });
+  state.dataList = dataList;
+  state.resTotalNums = res.total;
+  dataList.find((item, index) => {
+    if (item.id == route.query.currentId) {
+      state.resCurrentNum = index + 1;
+      state.resName = item.name;
+      state.currentRes = item;
+    }
+  });
+}
 
 function play() {
   if (Hls.isSupported()) {
     const instance = new Hls();
-    const video = document.querySelector(
-      `#${'video' + state.currentRes.id}`
-    );
+    const video = document.querySelector(`#${'video' + state.currentRes.id}`);
     instance.loadSource(parseUrlToPath(state.currentRes.video_url));
     instance.attachMedia(video);
     video.play();
@@ -103,6 +146,15 @@ function play() {
     console.warn('当前浏览器不支持Hls.js');
   }
 }
+
+init();
+
+watch(
+  () => store.state.selectedCategory,
+  (val) => {
+    init();
+  }
+);
 
 // function setPictureStyle(item) {
 //   const el = document.querySelector('picture' + item.id);
@@ -122,6 +174,7 @@ watch(
 
 const modules = [Navigation];
 const onSwiper = (swiper) => {
+  swiper.slideTo(state.resCurrentNum - 1);
   console.log(swiper);
 };
 const onSlideChange = (swiper) => {
@@ -132,9 +185,6 @@ const onSlideChange = (swiper) => {
 function goToResourcePage() {
   router.push({
     path: '/resource',
-    query: {
-      reload: true
-    }
   });
 }
 </script>

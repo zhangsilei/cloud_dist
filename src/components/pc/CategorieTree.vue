@@ -190,8 +190,8 @@ async function renderTree() {
     defaultSelectedKeys.push(defaultCategory.id);
     categoryChain.forEach((item) => defaultExpandedKeys.push(item));
     // defaultExpandedKeys.push(defaultCategory.id);
-    store.commit('SET_SELECTED_CATEGORY', defaultCategory);
     store.commit('SET_ALL_CATEGORIES', items);
+    store.commit('SET_SELECTED_CATEGORY', defaultCategory);
   }
 }
 

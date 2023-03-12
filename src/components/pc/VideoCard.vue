@@ -3,8 +3,13 @@
     <div class="card">
       <img class="poster" :src="poster" />
       <div class="info">
-        <n-icon :component="IosHeart" color="#999" />
-        <span class="like-num">{{ likeNum }}</span>
+        <n-icon
+          :component="IosHeart"
+          :color="localIsLike ? 'red' : '#999'"
+          style="cursor: pointer"
+          @click.stop="likeAction"
+        />
+        <span class="like-num">{{ localLikeNum }}</span>
         <n-icon
           :component="VideoClip20Filled"
           color="#999"
@@ -88,6 +93,7 @@ import PopupWindow from '@/components/pc/PopupWindow';
 import Clipboard from 'clipboard';
 import { isAdmin } from '@/common/global';
 import { useActivationCode } from '@/api/activation';
+import { postLike, deleteLike } from '@/api/like';
 
 const { message } = createDiscreteApi(['message']);
 
@@ -113,6 +119,11 @@ export default {
       required: true,
       type: Number,
       default: 0,
+    },
+    isLike: {
+      required: true,
+      type: Boolean,
+      default: false,
     },
     fileName: {
       required: true,
@@ -195,6 +206,28 @@ export default {
       }
     }
 
+    const localLikeNum = ref(props.likeNum);
+    const localIsLike = ref(props.isLike);
+
+    async function likeAction() {
+      if (isAdmin()) return;
+      try {
+        if (localIsLike.value) {
+          await deleteLike({
+            resource_id: props.id,
+          });
+          localIsLike.value = false;
+          localLikeNum.value--;
+        } else {
+          await postLike({
+            resource_id: props.id,
+          });
+          localIsLike.value = true;
+          localLikeNum.value++;
+        }
+      } catch (e) {}
+    }
+
     const adminOptions = [
       {
         label: '编辑',
@@ -238,6 +271,9 @@ export default {
       copyContact,
       options: isAdmin() ? adminOptions : userOptions,
       handleSelect,
+      likeAction,
+      localLikeNum,
+      localIsLike,
     };
   },
 };
@@ -256,17 +292,23 @@ export default {
     background: #f0f2f5;
     .poster {
       width: 100%;
-      height: 100%;
-      flex: 1;
+      // height: 100%;
+      height: 100px;
+      // flex: 1;
     }
     .info {
+      cursor: auto;
       position: absolute;
-      left: 5px;
-      bottom: 5px;
+      left: 0;
+      bottom: 0;
       display: flex;
       align-items: flex-end;
       color: #fff;
       line-height: 14px;
+      background: rgba(0, 0, 0, 0.3);
+      width: 100%;
+      padding: 5px;
+      box-sizing: border-box;
       .like-num {
         margin-right: 10px;
         color: #999;
