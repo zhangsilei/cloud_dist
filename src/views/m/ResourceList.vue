@@ -41,7 +41,7 @@
     </div>
 
     <!-- 排序标签 -->
-    <n-space v-if="!isFromSearch" justify="space-between">
+    <n-space v-if="!isFromSearch && !isFromFavorite" justify="space-between">
       <div>
         <n-tag
           v-for="item in tags"
@@ -247,7 +247,7 @@ function init() {
     categoryList.value = [];
     resourceList.value = [];
     isFromFavorite.value = true;
-    renderFavoriteList().then(() => setTabHeight());
+    renderFavoriteList().then(() => setFavoriteTabHeight());
   } else {
     title.value = route.query.name;
     category.value = route.query.category_id;
@@ -263,6 +263,10 @@ function init() {
 function setTabHeight() {
   tabHeight.value =
     document.body.offsetHeight - (categoryList.value.length ? 220 : 140) + 'px';
+}
+
+function setFavoriteTabHeight() {
+  tabHeight.value = document.body.offsetHeight - 100 + 'px';
 }
 
 const order_by = ref('');
@@ -465,7 +469,7 @@ async function renderResourceList() {
   loading.value = true;
   const res = await getResourceList({
     ...query,
-    category_id: route.query.category_id
+    category_id: route.query.category_id,
   });
   if (route.query.isFromSearch) {
     resourceList.value = res.resources || [];

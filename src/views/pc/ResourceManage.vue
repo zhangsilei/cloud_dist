@@ -203,6 +203,8 @@ function query() {
 
 function reset() {
   resource.query.key = null;
+  resource.query.page_num = 1;
+  renderResources();
 }
 
 // 上传按钮

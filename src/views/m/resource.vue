@@ -245,6 +245,7 @@ function goToActivationPage() {
     // flex-wrap: wrap;
     width: 100%;
     overflow-x: scroll;
+    &::-webkit-scrollbar {display:none}
     & > .n-tag {
       margin-bottom: 10px;
       margin-right: 10px;

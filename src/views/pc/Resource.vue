@@ -16,7 +16,9 @@
           </n-breadcrumb-item>
         </n-breadcrumb>
 
-        <template v-if="isShowResource && !isFavorite">
+        <template
+          v-if="isShowResource && !isFavorite && selectedCategory.dirType"
+        >
           <n-input
             round
             clearable
@@ -32,7 +34,10 @@
         </template>
       </div>
 
-      <div v-if="isShowResource" class="sort">
+      <div
+        v-if="isShowResource && !isFavorite && selectedCategory.dirType"
+        class="sort"
+      >
         <n-space>
           <span class="label">排序方式</span>
           <n-tag
@@ -81,7 +86,12 @@
           </n-grid-item>
         </n-grid>
         <n-pagination
-          v-if="!isShowDir"
+          v-if="
+            (!isShowDir &&
+              selectedCategory.id === favoriteTypeEnum.MY_FAVORITE) ||
+            selectedCategory.id === favoriteTypeEnum.FAVORITE ||
+            selectedCategory.dirType
+          "
           style="justify-content: flex-end"
           v-model:page="state.query.page_num"
           :item-count="state.total"
@@ -169,6 +179,8 @@ import { getLikeList } from '@/api/like';
 const store = useStore();
 const router = useRouter();
 const route = useRoute();
+
+const description = ref('');
 
 // 返回目录页
 function back() {
@@ -320,29 +332,28 @@ watch(
   }
 );
 
+const has_permissions = ref(false);
 if (route.params.reload) {
   init(store.state.selectedCategory, store.state.allCategories);
 }
 
-const has_permissions = ref(false);
-const description = ref('');
-
-function init(selectedCategory, allCategories) {
-  const dirType = selectedCategory.dirType;
-  const id = dirType ? selectedCategory.category_id : selectedCategory.id;
+function init(val, allCategories) {
+  const dirType = val.dirType;
+  const id = dirType ? val.category_id : val.id;
 
   if (
-    selectedCategory.id === favoriteTypeEnum.MY_FAVORITE ||
-    selectedCategory.id === favoriteTypeEnum.FAVORITE
+    val.id === favoriteTypeEnum.MY_FAVORITE ||
+    val.id === favoriteTypeEnum.FAVORITE
   ) {
     isShowDir.value = true;
     isFavorite.value = true;
   } else {
+    isShowDir.value = false;
     isFavorite.value = false;
   }
 
-  breadcrumbCategory.value = getBreadcrumb(allCategories, selectedCategory.id);
-  selectedCategory.value = selectedCategory.id;
+  breadcrumbCategory.value = getBreadcrumb(allCategories, val.id);
+  selectedCategory.value = val;
   state.query.category_id = id;
   state.query.resource_type = dirType;
 
@@ -353,8 +364,8 @@ function init(selectedCategory, allCategories) {
     state.dataList = [];
   }
 
-  has_permissions.value = selectedCategory.has_permissions;
-  description.value = selectedCategory.description;
+  has_permissions.value = val.has_permissions;
+  description.value = val.description;
 }
 
 async function renderFavorite() {

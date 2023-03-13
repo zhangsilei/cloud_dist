@@ -308,6 +308,8 @@ const reset = () => {
   activationParams.value.category_id = null;
   activationParams.value.activated = null;
   activationParams.value.key = null;
+  activationParams.value.page_num = 1;
+  renderActivationList();
 };
 
 const activationRef = ref(null);

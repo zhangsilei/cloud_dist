@@ -230,6 +230,8 @@ function query() {
 
 function reset() {
   userParams.value.key = null;
+  userParams.value.page_num = 1;
+  renderUserList();
 }
 
 let userList = ref([]);

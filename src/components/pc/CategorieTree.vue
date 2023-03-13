@@ -150,16 +150,19 @@ async function renderTree() {
       id: popularCategoryEnum.POPULAR,
       name: popularCategoryEnum.getDesc('POPULAR'),
       parent_category_id: 0,
+      has_permissions: true,
       items: [
         {
           id: favoriteTypeEnum.MY_FAVORITE,
           name: favoriteTypeEnum.getDesc('MY_FAVORITE'),
           parent_category_id: popularCategoryEnum.POPULAR,
+          has_permissions: true,
         },
         {
           id: favoriteTypeEnum.FAVORITE,
           name: favoriteTypeEnum.getDesc('FAVORITE'),
           parent_category_id: popularCategoryEnum.POPULAR,
+          has_permissions: true,
         },
       ],
     });
