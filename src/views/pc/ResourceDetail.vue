@@ -5,7 +5,7 @@
         <div class="name">{{ state.resName }}</div>
         <div>{{ state.resCurrentNum }}/{{ state.resTotalNums }}个文件</div>
       </div>
-      <n-icon class="close-btn" size="20" @click="goToResourcePage">
+      <n-icon class="close-btn" size="20" @click="closeDeail">
         <close class="close-icon" />
       </n-icon>
     </div>
@@ -66,6 +66,7 @@ import {
   RESOURCE_TYPE_PICTURE,
   favoriteTypeEnum,
   parseUrlToPath,
+  isUser,
 } from '@/common/global';
 import Hls from 'hls.js';
 import { getLikeList } from '@/api/like';
@@ -229,9 +230,23 @@ async function getNextData(index) {
   });
 }
 
+function closeDeail() {
+  if (isUser()) {
+    goToResourcePage();
+  } else {
+    goToResourceManagePage();
+  }
+}
+
 function goToResourcePage() {
   router.push({
     path: '/resource',
+  });
+}
+
+function goToResourceManagePage() {
+  router.push({
+    path: '/resource/manage',
   });
 }
 </script>
